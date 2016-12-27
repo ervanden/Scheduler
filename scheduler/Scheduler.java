@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -34,20 +35,15 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
     MatrixTableModel tm;
     DefaultTableColumnModel cm;
     JTextPane msgPane;
-    JLabel connectedFlag = new JLabel("isConnected?");
+    JButton connectedButton;
+    JButton saveButton;
+    JButton loadButton;
 
-    piClient piClient=new piClient();
-    
+    piClient piClient = new piClient();
+
     ArrayList<String> days = new ArrayList<>();
     ArrayList<String> timeslots = new ArrayList<>();
-    ArrayList<Float> totals = new ArrayList<>();
     ActiveHoursMap activehours = new ActiveHoursMap();
-
-    public void actionPerformed(ActionEvent e) {
-        String action = e.getActionCommand();
-        System.out.println("action " + action);
-        executeAction(action);
-    }
 
     public void valueChanged(ListSelectionEvent e) {
         if (!e.getValueIsAdjusting()) {
@@ -63,8 +59,28 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
         }
     }
 
+    public void actionPerformed(ActionEvent e) {
+        String action = e.getActionCommand();
+        System.out.println("action " + action);
+        executeAction(action);
+    }
+
     void executeAction(String action) {
 
+        if (action.equals("Connected?")) {
+            Color buttonColor = connectedButton.getBackground();
+            String buttonText = connectedButton.getText();
+            connectedButton.setText("pinging pi");
+            String reply = piClient.ping("ping");
+            if (reply.equals("goed ontvangen: <ping>")) {
+                connectedButton.setBackground(Color.green);
+            } else {
+                connectedButton.setBackground(Color.red);
+            }
+
+            connectedButton.setText(buttonText);
+            new resetButtonColorThread(connectedButton, buttonColor, buttonText).start();
+        }
         if (action.equals("Save")) {
 
         }
@@ -72,35 +88,40 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
 
         }
     }
-    
-    class testConnectionThread extends Thread {
-    JLabel result;
-    public testConnectionThread(JLabel result) {
-        super("testConnection Thread");
-        this.result = result;
-    }
 
-    public void run() {
-        while (true){
-            System.out.println("pinging pi");
-            String reply=piClient.ping("ping");
-            if (reply.equals("goed ontvangen: <ping>")) {
-                result.setText("Connected");
-                result.setForeground(Color.GREEN);
-            } else {
-                result.setText("Disconnected");
-                                result.setForeground(Color.RED);
-            }
-            try {Thread.sleep(1000);} catch (InterruptedException ie){};
+    class resetButtonColorThread extends Thread {
+
+        JButton b;
+        Color c;
+        String t;
+
+        public resetButtonColorThread(JButton b, Color c, String t) {
+            super("reset button Thread");
+            this.b = b;
+            this.c = c;
+            this.t = t;
+        }
+
+        public void run() {
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException ie) {
+            };
+            b.setBackground(c);
+            b.setText(t);
         }
     }
-}
 
     public Scheduler() {
         super();
 
-         new testConnectionThread(connectedFlag).start();
-         
+        TimeValue t = new TimeValue();
+        t.print();
+        for (int i = 0; i < 200; i++) {
+            t.add(Calendar.DAY_OF_MONTH, 1);
+            t.print();
+        }
+
         BoxLayout box = new BoxLayout(this, BoxLayout.PAGE_AXIS);
         this.setLayout(box);
 
@@ -108,17 +129,21 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
 
         for (int hr = 0; hr <= 23; hr++) {
             for (int min = 0; min <= 45; min = min + 15) {
-                timeslots.add(hr + ":" + min);
+                if (min == 0) {
+                    timeslots.add(hr + ":0" + min);
+                } else {
+                    timeslots.add(hr + ":" + min);
+                }
             }
         }
 
-        days.add("monday");
-        days.add("tuesday");
-        days.add("wednesday");
-        days.add("thursday");
-        days.add("friday");
-        days.add("saturday");
-        days.add("sunday");
+        // make an array with the names of the seven days starting from today
+        TimeValue now = new TimeValue();
+        days.add("TODAY");
+        for (int day = 1; day <= 6; day++) {
+            now.incrementDay();
+            days.add(now.dayShortName());
+        }
 
         table = new JTable(tm);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
@@ -127,15 +152,15 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
         table.getSelectionModel().addListSelectionListener(this);
         table.setDefaultRenderer(String.class, new MyRenderer());
 
-        for (int row = 0; row < days.size(); row++) {
-            for (int col = 0; col < timeslots.size(); col++) {
+        for (int row = 0; row < timeslots.size(); row++) {
+            for (int col = 0; col < days.size(); col++) {
                 activehours.put(row, col, false);
             }
         }
 
         JScrollPane tableScrollPane = new JScrollPane(table);
-        
-        msgPane=new JTextPane();
+
+        msgPane = new JTextPane();
         JScrollPane msgScrollPane = new JScrollPane(msgPane);
 
         int width = 300;
@@ -150,10 +175,13 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
         msgScrollPane.setPreferredSize(preferredDimension);
         msgScrollPane.setMaximumSize(maximumDimension);
 
-        JButton saveButton = new JButton("Save");
+        connectedButton = new JButton("Connected?");
+        connectedButton.addActionListener(this);
+        connectedButton.setActionCommand("Connected?");
+        saveButton = new JButton("Save");
         saveButton.addActionListener(this);
         saveButton.setActionCommand("Save");
-        JButton loadButton = new JButton("Load");
+        loadButton = new JButton("Load");
         loadButton.addActionListener(this);
         loadButton.setActionCommand("Load");
 
@@ -161,8 +189,8 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
         ioPane.setLayout(new BoxLayout(ioPane, BoxLayout.LINE_AXIS));
         ioPane.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
 //        buttonPane.add(Box.createHorizontalGlue());
-        ioPane.add(connectedFlag);
-                ioPane.add(Box.createRigidArea(new Dimension(10, 0)));
+        ioPane.add(connectedButton);
+        ioPane.add(Box.createRigidArea(new Dimension(10, 0)));
         ioPane.add(saveButton);
         ioPane.add(Box.createRigidArea(new Dimension(10, 0)));
         ioPane.add(loadButton);
@@ -196,19 +224,19 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
     class MatrixTableModel extends DefaultTableModel {
 
         public int getColumnCount() {
-            return timeslots.size();
-        }
-
-        public int getRowCount() {
             return days.size();
         }
 
+        public int getRowCount() {
+            return timeslots.size();
+        }
+
         public String getColumnName(int col) {
-            return null; //days.get(col);
+            return days.get(col);
         }
 
         public Object getValueAt(int row, int col) {
-            return timeslots.get(col);
+            return timeslots.get(row);
         }
 
         public Class getColumnClass(int c) {
