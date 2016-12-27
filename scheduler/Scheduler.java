@@ -9,13 +9,19 @@ import javax.swing.JTable;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JTextField;
+import javax.swing.JLabel;
+import javax.swing.JTextPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -27,9 +33,11 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
     JTable table;
     MatrixTableModel tm;
     DefaultTableColumnModel cm;
-    JTextField memberField;
-    JTextField itemField;
+    JTextPane msgPane;
+    JLabel connectedFlag = new JLabel("isConnected?");
 
+    piClient piClient=new piClient();
+    
     ArrayList<String> days = new ArrayList<>();
     ArrayList<String> timeslots = new ArrayList<>();
     ArrayList<Float> totals = new ArrayList<>();
@@ -64,10 +72,35 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
 
         }
     }
+    
+    class testConnectionThread extends Thread {
+    JLabel result;
+    public testConnectionThread(JLabel result) {
+        super("testConnection Thread");
+        this.result = result;
+    }
+
+    public void run() {
+        while (true){
+            System.out.println("pinging pi");
+            String reply=piClient.ping("ping");
+            if (reply.equals("goed ontvangen: <ping>")) {
+                result.setText("Connected");
+                result.setForeground(Color.GREEN);
+            } else {
+                result.setText("Disconnected");
+                                result.setForeground(Color.RED);
+            }
+            try {Thread.sleep(1000);} catch (InterruptedException ie){};
+        }
+    }
+}
 
     public Scheduler() {
         super();
 
+         new testConnectionThread(connectedFlag).start();
+         
         BoxLayout box = new BoxLayout(this, BoxLayout.PAGE_AXIS);
         this.setLayout(box);
 
@@ -89,7 +122,7 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
 
         table = new JTable(tm);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-        table.setFillsViewportHeight(true);
+        //       table.setFillsViewportHeight(true);
         table.setCellSelectionEnabled(true);
         table.getSelectionModel().addListSelectionListener(this);
         table.setDefaultRenderer(String.class, new MyRenderer());
@@ -100,7 +133,22 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
             }
         }
 
-        JScrollPane scrollPane = new JScrollPane(table);
+        JScrollPane tableScrollPane = new JScrollPane(table);
+        
+        msgPane=new JTextPane();
+        JScrollPane msgScrollPane = new JScrollPane(msgPane);
+
+        int width = 300;
+        int height = 100;
+        Dimension minimumDimension = new Dimension(width, 50);
+        Dimension preferredDimension = new Dimension(width, height);
+        Dimension maximumDimension = new Dimension(10000, 10000);
+        msgPane.setMinimumSize(minimumDimension);
+        msgPane.setPreferredSize(preferredDimension);
+        msgPane.setMaximumSize(maximumDimension);
+        msgScrollPane.setMinimumSize(minimumDimension);
+        msgScrollPane.setPreferredSize(preferredDimension);
+        msgScrollPane.setMaximumSize(maximumDimension);
 
         JButton saveButton = new JButton("Save");
         saveButton.addActionListener(this);
@@ -113,14 +161,16 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
         ioPane.setLayout(new BoxLayout(ioPane, BoxLayout.LINE_AXIS));
         ioPane.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
 //        buttonPane.add(Box.createHorizontalGlue());
+        ioPane.add(connectedFlag);
+                ioPane.add(Box.createRigidArea(new Dimension(10, 0)));
         ioPane.add(saveButton);
         ioPane.add(Box.createRigidArea(new Dimension(10, 0)));
         ioPane.add(loadButton);
 
-        add(scrollPane);
+        add(tableScrollPane);
         add(ioPane);
+        add(msgScrollPane);
     }
-
 
     class ActiveHoursMap {
 
@@ -143,7 +193,6 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
         }
     }
 
-    
     class MatrixTableModel extends DefaultTableModel {
 
         public int getColumnCount() {
