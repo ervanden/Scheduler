@@ -9,41 +9,36 @@ import javax.swing.JTable;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.HashMap;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
-import javax.swing.JLabel;
+import javax.swing.JRadioButton;
 import javax.swing.JTextPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableColumnModel;
-import javax.swing.table.DefaultTableModel;
 
 public class Scheduler extends JPanel implements ActionListener, ListSelectionListener {
 
-    JTable table;
     MatrixTableModel tm;
-    DefaultTableColumnModel cm;
+
+    JTable table;
     JTextPane msgPane;
     JButton connectedButton;
     JButton saveButton;
     JButton loadButton;
+    JRadioButton onceButton;
+    JRadioButton alwaysButton;
+    
+    boolean onceMode=false;
 
     piClient piClient = new piClient();
 
     ArrayList<String> days = new ArrayList<>();
     ArrayList<String> timeslots = new ArrayList<>();
-    ActiveHoursMap activehours = new ActiveHoursMap();
 
     public void valueChanged(ListSelectionEvent e) {
         if (!e.getValueIsAdjusting()) {
@@ -51,8 +46,10 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
             int[] selectedcolumns = table.getSelectedColumns();
             for (int r = 0; r < selectedrows.length; r++) {
                 for (int c = 0; c < selectedcolumns.length; c++) {
-//                    System.out.println("Selected row=" + selectedrows[r] + " col=" + selectedcolumns[c]);
-                    activehours.toggle(selectedrows[r], selectedcolumns[c]);
+                    int row = selectedrows[r];
+                    int col = selectedcolumns[c];
+                    tm.setCyclic(row, col, !tm.getCyclic(row, col));
+                    tm.setOnce(row,col,onceMode);
                 }
             }
             table.clearSelection();
@@ -80,6 +77,12 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
 
             connectedButton.setText(buttonText);
             new resetButtonColorThread(connectedButton, buttonColor, buttonText).start();
+        }
+        if (action.equals("once")) {
+onceMode=true;
+        }
+        if (action.equals("always")) {
+onceMode=false;
         }
         if (action.equals("Save")) {
 
@@ -114,36 +117,18 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
 
     public Scheduler() {
         super();
-
-        TimeValue t = new TimeValue();
-        t.print();
-        for (int i = 0; i < 200; i++) {
-            t.add(Calendar.DAY_OF_MONTH, 1);
-            t.print();
-        }
-
+        /*
+         TimeValue t = new TimeValue();
+         t.print();
+         for (int i = 0; i < 200; i++) {
+         t.add(Calendar.DAY_OF_MONTH, 1);
+         t.print();
+         }
+         */
         BoxLayout box = new BoxLayout(this, BoxLayout.PAGE_AXIS);
         this.setLayout(box);
 
         tm = new MatrixTableModel();
-
-        for (int hr = 0; hr <= 23; hr++) {
-            for (int min = 0; min <= 45; min = min + 15) {
-                if (min == 0) {
-                    timeslots.add(hr + ":0" + min);
-                } else {
-                    timeslots.add(hr + ":" + min);
-                }
-            }
-        }
-
-        // make an array with the names of the seven days starting from today
-        TimeValue now = new TimeValue();
-        days.add("TODAY");
-        for (int day = 1; day <= 6; day++) {
-            now.incrementDay();
-            days.add(now.dayShortName());
-        }
 
         table = new JTable(tm);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
@@ -151,12 +136,6 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
         table.setCellSelectionEnabled(true);
         table.getSelectionModel().addListSelectionListener(this);
         table.setDefaultRenderer(String.class, new MyRenderer());
-
-        for (int row = 0; row < timeslots.size(); row++) {
-            for (int col = 0; col < days.size(); col++) {
-                activehours.put(row, col, false);
-            }
-        }
 
         JScrollPane tableScrollPane = new JScrollPane(table);
 
@@ -185,73 +164,35 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
         loadButton.addActionListener(this);
         loadButton.setActionCommand("Load");
 
+        onceButton = new JRadioButton("once");
+        onceButton.setActionCommand("once");
+        onceButton.addActionListener(this);
+        alwaysButton = new JRadioButton("always");
+        alwaysButton.setActionCommand("always");
+        alwaysButton.addActionListener(this);
+               alwaysButton.setSelected(true);
+
+        //Group the radio buttons.
+        ButtonGroup group = new ButtonGroup();
+        group.add(onceButton);
+        group.add(alwaysButton);
+
         JPanel ioPane = new JPanel();
         ioPane.setLayout(new BoxLayout(ioPane, BoxLayout.LINE_AXIS));
         ioPane.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
-//        buttonPane.add(Box.createHorizontalGlue());
-        ioPane.add(connectedButton);
+        ioPane.add(alwaysButton);
+        ioPane.add(Box.createRigidArea(new Dimension(10, 0)));
+        ioPane.add(onceButton);
         ioPane.add(Box.createRigidArea(new Dimension(10, 0)));
         ioPane.add(saveButton);
         ioPane.add(Box.createRigidArea(new Dimension(10, 0)));
         ioPane.add(loadButton);
+        ioPane.add(Box.createRigidArea(new Dimension(10, 0)));
+        ioPane.add(connectedButton);
 
         add(tableScrollPane);
         add(ioPane);
         add(msgScrollPane);
-    }
-
-    class ActiveHoursMap {
-
-        HashMap<String, Boolean> m = new HashMap<>();
-
-        public ActiveHoursMap() {
-            m.clear();
-        }
-
-        public void put(int row, int col, boolean value) {
-            m.put(row + "|" + col, value);
-        }
-
-        public void toggle(int row, int col) {
-            m.put(row + "|" + col, !m.get(row + "|" + col));
-        }
-
-        public boolean get(int row, int col) {
-            return m.get(row + "|" + col);
-        }
-    }
-
-    class MatrixTableModel extends DefaultTableModel {
-
-        public int getColumnCount() {
-            return days.size();
-        }
-
-        public int getRowCount() {
-            return timeslots.size();
-        }
-
-        public String getColumnName(int col) {
-            return days.get(col);
-        }
-
-        public Object getValueAt(int row, int col) {
-            return timeslots.get(row);
-        }
-
-        public Class getColumnClass(int c) {
-            String s = "";
-            return s.getClass();
-        }
-
-        public boolean isCellEditable(int row, int col) {
-            return false;
-        }
-
-        public void setValueAt(Object value, int row, int col) {
-
-            // fireTableDataChanged();
-        }
     }
 
     class MyRenderer extends DefaultTableCellRenderer {
@@ -265,16 +206,25 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
             Component c = super.getTableCellRendererComponent(
                     table, value, isSelected, hasFocus, row, column);
 
-            if (activehours.get(row, column)) {
-                c.setBackground(Color.green.darker());
-            } else if (!isSelected) {
-                c.setBackground(backgroundColor);
+            if (tm.getCyclic(row, column)) {
+                if (tm.getOnce(row, column)) {
+                    c.setBackground(Color.red);
+                } else {
+                    c.setBackground(Color.pink);
+                }
+            } else {
+                if (tm.getOnce(row, column)) {
+                    c.setBackground(Color.blue);
+                } else {
+                    c.setBackground(Color.cyan);
+                }
             }
-            return c;
-        }
-    }
 
-    private static void createAndShowGUI() {
+        return c ;
+    }
+}
+
+private static void createAndShowGUI() {
         //Create and set up the window.
         JFrame frame = new JFrame("Active hours");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

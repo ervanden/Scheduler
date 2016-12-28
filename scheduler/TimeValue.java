@@ -1,12 +1,11 @@
 package scheduler;
 
-import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 
 public class TimeValue extends GregorianCalendar {
-    /*
+    /* Calendar fields
      YEAR
      MONTH
      DAY_OF_MONTH
@@ -17,38 +16,21 @@ public class TimeValue extends GregorianCalendar {
      HOUR, HOUR_OF_DAY, MINUTE
      */
 
-    Object value;
+    public Boolean cyclic;
+    public Boolean once;
 
     public TimeValue() { // returns an object corresponding to now
         super();
         LocalDateTime now = LocalDateTime.now();
-
-        System.out.println(now.getYear());
-        System.out.println(now.getMonth().getValue()-1);
-        System.out.println(now.getDayOfMonth());
-        System.out.println("=" + now.getDayOfWeek());
-        System.out.println(now.getHour());
-        System.out.println(now.getMinute());
-
         this.set(now.getYear(),
-                now.getMonth().getValue()-1,  // Calendar works with months 0-11
+                now.getMonth().getValue() - 1, // Calendar works with months 0-11
                 now.getDayOfMonth(),
                 now.getHour(),
                 now.getMinute());
-
-        value = null;
-        /*
-         System.out.println(now.getYear());
-         System.out.println(now.getMonthValue());
-         System.out.println(now.getDayOfMonth());
-         System.out.println("=" + now.getDayOfWeek());
-         System.out.println(now.getHour());
-         System.out.println(now.getMinute());
-         */
+        cyclic = null;
     }
 
-    public TimeValue(TimeValue t) {
-//     TimeValue tnew = new TimeValue();
+    public TimeValue(TimeValue t) {   // copy constructor
         super();
         this.set(
                 t.get(Calendar.YEAR),
@@ -59,27 +41,38 @@ public class TimeValue extends GregorianCalendar {
         );
 
     }
-    
-    public int year(){return get(Calendar.YEAR);}
-    public int month() {return get(Calendar.MONTH)+1;}
-    public int day() {return get(Calendar.DAY_OF_MONTH);}    
+
+    public Integer year() {
+        return get(Calendar.YEAR);
+    }
+
+    public Integer month() {
+        return get(Calendar.MONTH) + 1;
+    }
+
+    public Integer day() {
+        return get(Calendar.DAY_OF_MONTH);
+    }
+
     public String dayName() {
-        String[] days = {"SUNDAY", "MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY"};
-    return days[get(Calendar.DAY_OF_WEEK)-1];}
-    public String dayShortName(){
-        return dayName().substring(0,3);
+        String[] days = {"SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"};
+        return days[get(Calendar.DAY_OF_WEEK) - 1];
     }
-    public int hour() {return get(Calendar.HOUR_OF_DAY);} 
-    public int minute() {return get(Calendar.MINUTE);}     
-    
-    
+
+    public String dayShortName() {
+        return dayName().substring(0, 3);
+    }
+
+    public Integer hour() {
+        return get(Calendar.HOUR_OF_DAY);
+    }
+
+    public Integer minute() {
+        return get(Calendar.MINUTE);
+    }
+
     public void print() {
-
-        System.out.println(dayShortName()+" "+year()+" "+month()+" "+day()+" "+hour()+" "+minute());
-
+        System.out.println(dayShortName() + " " + year() + " " + month() + " " + day() + " " + hour() + " " + minute());
     }
 
-    public void incrementDay() {
-        add(Calendar.DAY_OF_MONTH, 1);
-    }
 }
