@@ -1,5 +1,6 @@
 package scheduler;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import javax.swing.table.DefaultTableModel;
 
@@ -9,7 +10,7 @@ public class MatrixTableModel extends DefaultTableModel {
     int rowCount = 24 * 4;
     TimeValue[][] tableData = new TimeValue[rowCount][columnCount];
 
-    public MatrixTableModel() {
+    public MatrixTableModel(piClient client) {
         super();
 
         for (int col = 0; col < columnCount; col++) {
@@ -23,15 +24,29 @@ public class MatrixTableModel extends DefaultTableModel {
                     slot.set(Calendar.MINUTE, min);
                     slot.cyclic = false;
                     slot.once = false;
-//                    System.out.println("\n " + row + " " + col + "\n");
-//                    slot.print();
                     tableData[row][col] = slot;
                     row++;
                 }
             }
         }
-        System.out.println(" nr columns =" + tableData[0].length);
-        System.out.println(" nr rows =" + tableData.length);
+
+        // load the values from the server
+    }
+
+    public void sendScheduleToServer(piClient client) {
+        ArrayList<String> daySchedule;
+        ArrayList<String> reply;
+
+
+        for (int col = 0; col < columnCount; col++) {
+            daySchedule = new ArrayList<>();
+                    daySchedule.add("newSchedule");
+            for (int row = 0; row < rowCount; row++) {
+                daySchedule.add(tableData[row][col].asString());
+            }
+            reply = client.send(daySchedule);
+        }
+
     }
 
     public int getColumnCount() {
@@ -46,8 +61,8 @@ public class MatrixTableModel extends DefaultTableModel {
         if (col == 0) {
             return "TODAY";
         } else {
-            TimeValue t=tableData[0][col];
-            return t.dayShortName()+" "+t.day()+"/"+t.month();
+            TimeValue t = tableData[0][col];
+            return t.dayShortName() + " " + t.day() + "/" + t.month();
         }
     }
 

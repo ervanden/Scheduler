@@ -75,4 +75,42 @@ public class TimeValue extends GregorianCalendar {
         System.out.println(dayShortName() + " " + year() + " " + month() + " " + day() + " " + hour() + " " + minute());
     }
 
+    public String asString() {
+        return dayName()
+                + " " + year()
+                + " " + month()
+                + " " + day()
+                + " " + hour()
+                + " " + minute()
+                + " " + cyclic
+                + " " + once;
+
+    }
+
+    static public TimeValue stringToTimeValue(String s) {
+        String[] tokens = s.split(" ");
+        String dayName = tokens[0];
+        String year = tokens[1];
+        String month = tokens[2];
+        String day = tokens[3];
+        String hour = tokens[4];
+        String minute = tokens[5];
+        String cyclic = tokens[6];
+        String once = tokens[7];
+        TimeValue tv = new TimeValue();
+        tv.set(Integer.parseInt(year),
+                Integer.parseInt(month) - 1,
+                Integer.parseInt(day),
+                Integer.parseInt(hour),
+                Integer.parseInt(minute));
+        tv.cyclic = Boolean.parseBoolean(cyclic);
+        tv.once = Boolean.parseBoolean(once);
+        System.out.println(">" + Integer.parseInt(year) + " "
+                + Integer.parseInt(month) + " "
+                + Integer.parseInt(day) + " "
+                + Integer.parseInt(hour) + " "
+                + Integer.parseInt(minute));
+        return tv;
+
+    }
 }

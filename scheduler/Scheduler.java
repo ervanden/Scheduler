@@ -32,8 +32,8 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
     JButton loadButton;
     JRadioButton onceButton;
     JRadioButton alwaysButton;
-    
-    boolean onceMode=false;
+
+    boolean onceMode = false;
 
     piClient piClient = new piClient();
 
@@ -49,7 +49,7 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
                     int row = selectedrows[r];
                     int col = selectedcolumns[c];
                     tm.setCyclic(row, col, !tm.getCyclic(row, col));
-                    tm.setOnce(row,col,onceMode);
+                    tm.setOnce(row, col, onceMode);
                 }
             }
             table.clearSelection();
@@ -68,24 +68,36 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
             Color buttonColor = connectedButton.getBackground();
             String buttonText = connectedButton.getText();
             connectedButton.setText("pinging pi");
-            String reply = piClient.ping("ping");
-            if (reply.equals("goed ontvangen: <ping>")) {
-                connectedButton.setBackground(Color.green);
-            } else {
-                connectedButton.setBackground(Color.red);
-            }
 
+            ArrayList<String> msg = new ArrayList<>();
+
+            msg.add("newSchedule");
+            msg.add("hallo pi2");
+            msg.add("hallo pi3");
+
+            ArrayList<String> reply = piClient.send(msg);
+
+            for (String line : reply) {
+                System.out.println(line);
+            }
+            /*
+             if (reply.equals("goed ontvangen: <ping>")) {
+             connectedButton.setBackground(Color.green);
+             } else {
+             connectedButton.setBackground(Color.red);
+             }
+             */
             connectedButton.setText(buttonText);
             new resetButtonColorThread(connectedButton, buttonColor, buttonText).start();
         }
         if (action.equals("once")) {
-onceMode=true;
+            onceMode = true;
         }
         if (action.equals("always")) {
-onceMode=false;
+            onceMode = false;
         }
         if (action.equals("Save")) {
-
+            tm.sendScheduleToServer(piClient);
         }
         if (action.equals("Load")) {
 
@@ -117,22 +129,15 @@ onceMode=false;
 
     public Scheduler() {
         super();
-        /*
-         TimeValue t = new TimeValue();
-         t.print();
-         for (int i = 0; i < 200; i++) {
-         t.add(Calendar.DAY_OF_MONTH, 1);
-         t.print();
-         }
-         */
+
         BoxLayout box = new BoxLayout(this, BoxLayout.PAGE_AXIS);
         this.setLayout(box);
 
-        tm = new MatrixTableModel();
+        tm = new MatrixTableModel(piClient);
 
         table = new JTable(tm);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-        //       table.setFillsViewportHeight(true);
+        table.setFillsViewportHeight(true);
         table.setCellSelectionEnabled(true);
         table.getSelectionModel().addListSelectionListener(this);
         table.setDefaultRenderer(String.class, new MyRenderer());
@@ -170,7 +175,7 @@ onceMode=false;
         alwaysButton = new JRadioButton("always");
         alwaysButton.setActionCommand("always");
         alwaysButton.addActionListener(this);
-               alwaysButton.setSelected(true);
+        alwaysButton.setSelected(true);
 
         //Group the radio buttons.
         ButtonGroup group = new ButtonGroup();
@@ -220,11 +225,11 @@ onceMode=false;
                 }
             }
 
-        return c ;
+            return c;
+        }
     }
-}
 
-private static void createAndShowGUI() {
+    private static void createAndShowGUI() {
         //Create and set up the window.
         JFrame frame = new JFrame("Active hours");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -237,10 +242,15 @@ private static void createAndShowGUI() {
     }
 
     public static void main(String[] args) {
-        javax.swing.SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                createAndShowGUI();
-            }
-        });
+        if (args.length == 0) {
+            javax.swing.SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                    createAndShowGUI();
+                }
+            });
+        } else if (args[0].equals("server")) {
+            piServer srv = new piServer();
+            srv.runServer();
+        }
     }
 }
