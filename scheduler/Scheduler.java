@@ -14,7 +14,6 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
-import javax.swing.JButton;
 import javax.swing.JRadioButton;
 import javax.swing.JTextPane;
 import javax.swing.event.ListSelectionEvent;
@@ -27,32 +26,32 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
 
     JTable table;
     JTextPane msgPane;
-    JButton connectedButton;
-    JButton saveButton;
-    JButton loadButton;
     JRadioButton onceButton;
     JRadioButton alwaysButton;
 
     boolean onceMode = false;
 
-    piClient piClient = new piClient();
+    PiClient piClient = new PiClient();
 
-    ArrayList<String> days = new ArrayList<>();
-    ArrayList<String> timeslots = new ArrayList<>();
-
+    
+    @Override
     public void valueChanged(ListSelectionEvent e) {
         if (!e.getValueIsAdjusting()) {
-            int[] selectedrows = table.getSelectedRows();
-            int[] selectedcolumns = table.getSelectedColumns();
-            for (int r = 0; r < selectedrows.length; r++) {
-                for (int c = 0; c < selectedcolumns.length; c++) {
-                    int row = selectedrows[r];
-                    int col = selectedcolumns[c];
+            int[] selectedRows = table.getSelectedRows();
+            int[] selectedColumns = table.getSelectedColumns();
+            for (int r = 0; r < selectedRows.length; r++) {
+                for (int c = 0; c < selectedColumns.length; c++) {
+                    int row = selectedRows[r];
+                    int col = selectedColumns[c];
                     tm.setCyclic(row, col, !tm.getCyclic(row, col));
                     tm.setOnce(row, col, onceMode);
                 }
             }
             table.clearSelection();
+
+            if (selectedRows.length * selectedRows.length > 0) {
+                tm.sendScheduleToServer(piClient, selectedColumns);
+            }
         }
     }
 
@@ -63,67 +62,11 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
     }
 
     void executeAction(String action) {
-
-        if (action.equals("Connected?")) {
-            Color buttonColor = connectedButton.getBackground();
-            String buttonText = connectedButton.getText();
-            connectedButton.setText("pinging pi");
-
-            ArrayList<String> msg = new ArrayList<>();
-
-            msg.add("newSchedule");
-            msg.add("hallo pi2");
-            msg.add("hallo pi3");
-
-            ArrayList<String> reply = piClient.send(msg);
-
-            for (String line : reply) {
-                System.out.println(line);
-            }
-            /*
-             if (reply.equals("goed ontvangen: <ping>")) {
-             connectedButton.setBackground(Color.green);
-             } else {
-             connectedButton.setBackground(Color.red);
-             }
-             */
-            connectedButton.setText(buttonText);
-            new resetButtonColorThread(connectedButton, buttonColor, buttonText).start();
-        }
         if (action.equals("once")) {
             onceMode = true;
         }
         if (action.equals("always")) {
             onceMode = false;
-        }
-        if (action.equals("Save")) {
-            tm.sendScheduleToServer(piClient);
-        }
-        if (action.equals("Load")) {
-
-        }
-    }
-
-    class resetButtonColorThread extends Thread {
-
-        JButton b;
-        Color c;
-        String t;
-
-        public resetButtonColorThread(JButton b, Color c, String t) {
-            super("reset button Thread");
-            this.b = b;
-            this.c = c;
-            this.t = t;
-        }
-
-        public void run() {
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException ie) {
-            };
-            b.setBackground(c);
-            b.setText(t);
         }
     }
 
@@ -159,20 +102,10 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
         msgScrollPane.setPreferredSize(preferredDimension);
         msgScrollPane.setMaximumSize(maximumDimension);
 
-        connectedButton = new JButton("Connected?");
-        connectedButton.addActionListener(this);
-        connectedButton.setActionCommand("Connected?");
-        saveButton = new JButton("Save");
-        saveButton.addActionListener(this);
-        saveButton.setActionCommand("Save");
-        loadButton = new JButton("Load");
-        loadButton.addActionListener(this);
-        loadButton.setActionCommand("Load");
-
-        onceButton = new JRadioButton("once");
+        onceButton = new JRadioButton("Set once");
         onceButton.setActionCommand("once");
         onceButton.addActionListener(this);
-        alwaysButton = new JRadioButton("always");
+        alwaysButton = new JRadioButton("Set always");
         alwaysButton.setActionCommand("always");
         alwaysButton.addActionListener(this);
         alwaysButton.setSelected(true);
@@ -188,12 +121,6 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
         ioPane.add(alwaysButton);
         ioPane.add(Box.createRigidArea(new Dimension(10, 0)));
         ioPane.add(onceButton);
-        ioPane.add(Box.createRigidArea(new Dimension(10, 0)));
-        ioPane.add(saveButton);
-        ioPane.add(Box.createRigidArea(new Dimension(10, 0)));
-        ioPane.add(loadButton);
-        ioPane.add(Box.createRigidArea(new Dimension(10, 0)));
-        ioPane.add(connectedButton);
 
         add(tableScrollPane);
         add(ioPane);
@@ -224,16 +151,13 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
                     c.setBackground(Color.cyan);
                 }
             }
-
             return c;
         }
     }
 
     private static void createAndShowGUI() {
-        //Create and set up the window.
         JFrame frame = new JFrame("Active hours");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        //Create and set up the content pane.
         Scheduler newContentPane = new Scheduler();
         newContentPane.setOpaque(true); //content panes must be opaque
         frame.setContentPane(newContentPane);
@@ -241,15 +165,32 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
         frame.setVisible(true);
     }
 
+    private static void usage() {
+        System.out.println("Usage :");
+        System.out.println(" Scheduler.jar client server_ip server_port");
+        System.out.println(" Scheduler.jar server");
+        System.out.println();
+    }
+
     public static void main(String[] args) {
+
         if (args.length == 0) {
-            javax.swing.SwingUtilities.invokeLater(new Runnable() {
-                public void run() {
-                    createAndShowGUI();
-                }
-            });
+            usage();
+        } else if (args[0].equals("client")) {
+            if (args.length != 3) {
+                usage();
+            } else {
+                PiClient.setServerAddress(args[1], Integer.parseInt(args[2]));
+
+                javax.swing.SwingUtilities.invokeLater(new Runnable() {
+                    public void run() {
+                        createAndShowGUI();
+                    }
+                });
+            }
+
         } else if (args[0].equals("server")) {
-            piServer srv = new piServer();
+            PiServer srv = new PiServer();
             srv.runServer();
         }
     }

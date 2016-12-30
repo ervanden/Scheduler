@@ -4,18 +4,10 @@ import java.time.LocalDateTime;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 
-public class TimeValue extends GregorianCalendar {
-    /* Calendar fields
-     YEAR
-     MONTH
-     DAY_OF_MONTH
-     DAY_OF_WEEK
-     WEEK_OF_MONTH
-     DAY_OF_WEEK_IN_MONTH
-     AM_PM
-     HOUR, HOUR_OF_DAY, MINUTE
-     */
 
+
+public class TimeValue extends GregorianCalendar {
+    
     public Boolean cyclic;
     public Boolean once;
 
@@ -72,7 +64,13 @@ public class TimeValue extends GregorianCalendar {
     }
 
     public void print() {
-        System.out.println(dayShortName() + " " + year() + " " + month() + " " + day() + " " + hour() + " " + minute());
+        System.out.println(this.asString());
+    }
+
+    public boolean isSameDateAs(TimeValue t) {
+        return (this.year().intValue() == t.year().intValue())
+                && (this.month().intValue() == t.month().intValue())
+                && (this.day().intValue() == t.day().intValue());
     }
 
     public String asString() {
@@ -97,20 +95,15 @@ public class TimeValue extends GregorianCalendar {
         String minute = tokens[5];
         String cyclic = tokens[6];
         String once = tokens[7];
-        TimeValue tv = new TimeValue();
-        tv.set(Integer.parseInt(year),
+        TimeValue t = new TimeValue();
+        t.set(Integer.parseInt(year),
                 Integer.parseInt(month) - 1,
                 Integer.parseInt(day),
                 Integer.parseInt(hour),
                 Integer.parseInt(minute));
-        tv.cyclic = Boolean.parseBoolean(cyclic);
-        tv.once = Boolean.parseBoolean(once);
-        System.out.println(">" + Integer.parseInt(year) + " "
-                + Integer.parseInt(month) + " "
-                + Integer.parseInt(day) + " "
-                + Integer.parseInt(hour) + " "
-                + Integer.parseInt(minute));
-        return tv;
+        t.cyclic = Boolean.parseBoolean(cyclic);
+        t.once = Boolean.parseBoolean(once);
+        return t;
 
     }
 }

@@ -10,7 +10,7 @@ public class MatrixTableModel extends DefaultTableModel {
     int rowCount = 24 * 4;
     TimeValue[][] tableData = new TimeValue[rowCount][columnCount];
 
-    public MatrixTableModel(piClient client) {
+    public MatrixTableModel(PiClient client) {
         super();
 
         for (int col = 0; col < columnCount; col++) {
@@ -31,21 +31,55 @@ public class MatrixTableModel extends DefaultTableModel {
         }
 
         // load the values from the server
+        // If the reply is an empty list , this means that pi has no schedule yet
+        for (int col = 0; col < columnCount; col++) {
+
+            ArrayList<String> msg = new ArrayList<>();
+            ArrayList<String> reply;
+
+            String dayName = tableData[0][col].dayName();
+            System.out.println("getSchedule " + dayName);
+            msg.add("getSchedule");
+            msg.add(dayName);
+
+            reply = client.send(msg);
+            if (reply.size()==rowCount) {
+                for (int row = 0; row < rowCount; row++) {
+                    TimeValue timeValueFromPi = TimeValue.stringToTimeValue(reply.get(row));
+                    TimeValue timeValueCurrent = tableData[row][col];
+                    timeValueCurrent.cyclic = timeValueFromPi.cyclic;
+                    if (timeValueCurrent.isSameDateAs(timeValueFromPi)) {
+                        timeValueCurrent.once = timeValueFromPi.once;
+                    }
+
+                }
+            }
+        }
     }
 
-    public void sendScheduleToServer(piClient client) {
-        ArrayList<String> daySchedule;
+    public void sendScheduleToServer(PiClient client, int[] selectedColumns) {
+        ArrayList<String> msg;
         ArrayList<String> reply;
 
+        for (int c = 0; c < selectedColumns.length; c++) {  // send only the modified columns
+            int col = selectedColumns[c];
+            String dayName = tableData[0][col].dayName();
+            System.out.print("sending schedule for " + dayName + " ... ");
 
-        for (int col = 0; col < columnCount; col++) {
-            daySchedule = new ArrayList<>();
-                    daySchedule.add("newSchedule");
+            msg = new ArrayList<>();
+            msg.add("newSchedule");
             for (int row = 0; row < rowCount; row++) {
-                daySchedule.add(tableData[row][col].asString());
+                msg.add(tableData[row][col].asString());
             }
-            reply = client.send(daySchedule);
+            reply = client.send(msg);
+            System.out.println(reply.get(0));  // "ok"
         }
+
+        System.out.println("Telling pi to save the schedule ... ");
+        msg = new ArrayList<>();
+        msg.add("saveSchedule");
+        reply = client.send(msg);
+        System.out.println(reply.get(0));  // "ok"
 
     }
 
