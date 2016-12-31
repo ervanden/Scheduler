@@ -43,6 +43,23 @@ public class ServerEngine {
     public ServerEngine() {
         // control GPIO based on the schedule
         restoreSchedule();  // from scheduleFileName
+        
+/* test previousEvent and nextEvent
+        
+        for (String day : weekdays) {
+            for (int hour = 0; hour < 24; hour++) {
+                for (int min = 0; min < 60; min++) {
+                    TimeValue p = previousEvent(day, hour, min);
+                    TimeValue n = nextEvent(day, hour, min);
+                    System.out.println(
+                            p.dayName() + " " + p.hour() + ":" + p.minute()
+                            + " < " + day + " " + hour + ":" + min + "  < " +
+                            n.dayName() + " " + n.hour() + ":" + n.minute()
+                    );
+                }
+            }
+        }
+*/
     }
 
     static public void start() {
@@ -107,7 +124,6 @@ public class ServerEngine {
             if (Scheduler.windows) {
                 scheduleFileName = "C:\\Users\\erikv\\Documents\\Scheduler.txt";
             }
-            System.out.println(scheduleFileName);
             File initialFile = new File(scheduleFileName);
             OutputStream is = new FileOutputStream(initialFile);
             OutputStreamWriter isr = new OutputStreamWriter(is, "UTF-8");
@@ -141,7 +157,6 @@ public class ServerEngine {
             if (Scheduler.windows) {
                 scheduleFileName = "C:\\Users\\erikv\\Documents\\Scheduler.txt";
             }
-            System.out.println(scheduleFileName);
             File initialFile = new File(scheduleFileName);
             InputStream is = new FileInputStream(initialFile);
             InputStreamReader isr = new InputStreamReader(is, "UTF-8");
@@ -161,14 +176,20 @@ public class ServerEngine {
             System.err.println(" io exception while reading from " + scheduleFileName);
         }
     }
-    
-    public TimeValue previousEvent(TimeValue t){
-        TimeValue tprev=null;
-        return tprev;
+
+    private TimeValue previousEvent(String dayName, int hour, int minute) {
+        int row = hour * 4 + minute / 15;
+        int col = dayToColumn(dayName);
+        return tableData[row][col];
     }
-    
-        public TimeValue nextEvent(TimeValue t){
-        TimeValue tnext=null;
-        return tnext;
+
+    public TimeValue nextEvent(String dayName, int hour, int minute) {
+        int row = hour * 4 + minute / 15;
+        int col = dayToColumn(dayName);
+        row = (row + 1) % rowCount;
+        if (row == 0) { // overflow to next day
+            col = (col + 1) % 7;
+        }
+        return tableData[row][col];
     }
 }

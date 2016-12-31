@@ -20,11 +20,23 @@ public class ServerEngineThread extends Thread {
         // startScheduling() will now terminate and will be called again in run()
     }
 
+    
     private void startScheduling() {
         System.out.println("Restart scheduling");
 
         stop = false;
+/*      
+        while (true){
+        t=now;
+        STATUS := tprev.on
+        sleep(tnext-t)
+        STATUS := tnext.on
+        sleep(5 min)
+        }
+        
+        
 
+*/
         while (true) {
             try {
                 System.out.println("sleeping...");
