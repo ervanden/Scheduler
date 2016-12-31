@@ -2,27 +2,27 @@ package scheduler;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.InputStream;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class ServerEngine {
 
-    int columnCount = 7;
-    int rowCount = 24 * 4;
-    TimeValue[][] tableData = new TimeValue[rowCount][columnCount];
+    static int columnCount = 7;
+    static int rowCount = 24 * 4;
+    static TimeValue[][] tableData = new TimeValue[rowCount][columnCount];
 
-    String scheduleFileName = "/home/pi/Scheduler/Schedule.txt";
+    static String scheduleFileName = "/home/pi/Scheduler/Schedule.txt";
 
-    ArrayList<String> weekdays = new ArrayList<>();
+    static ArrayList<String> weekdays = new ArrayList<>();
+    static ServerEngineThread serverEngineThread = new ServerEngineThread();
 
     {
         weekdays.add("MONDAY");
@@ -42,41 +42,26 @@ public class ServerEngine {
 
     public ServerEngine() {
         // control GPIO based on the schedule
-        
         restoreSchedule();  // from scheduleFileName
-        
+    }
+
+    static public void start() {
+        serverEngineThread.start();
+    }
+
+    static public ArrayList<String> restart() {
+        System.out.println("serverEngine is asked to restart");
+        serverEngineThread.restart();
+        ArrayList<String> reply = new ArrayList<>();
+        reply.add("ok");
+        return reply;
     }
 
     static public int dayToColumn(String day) {
-        int c = 100;
-        if (day.equals("MONDAY")) {
-            c = 0;
-        }
-        if (day.equals("TUESDAY")) {
-            c = 1;
-        }
-        if (day.equals("WEDNESDAY")) {
-            c = 2;
-        }
-        if (day.equals("THURSDAY")) {
-            c = 3;
-        }
-        if (day.equals("FRIDAY")) {
-            c = 4;
-        }
-        if (day.equals("SATURDAY")) {
-            c = 5;
-        }
-        if (day.equals("SUNDAY")) {
-            c = 6;
-        }
-        if (c == 100) {
-            System.err.println("Argument to dayToInt() is not a day : " + day);
-        }
-        return c;
+        return weekdays.indexOf(day);
     }
 
-    public ArrayList<String> newSchedule(ArrayList<String> timeValueList) {
+    static public ArrayList<String> newSchedule(ArrayList<String> timeValueList) {
         System.out.println("Receiving schedule update");
         int row = 0;
         int col = -1;
@@ -94,7 +79,7 @@ public class ServerEngine {
         return reply;
     }
 
-    public ArrayList<String> getSchedule(ArrayList<String> day) {
+    static public ArrayList<String> getSchedule(ArrayList<String> day) {
         ArrayList<String> reply = new ArrayList<>();
 
         System.out.println("Sending schedule for " + day.get(0));
@@ -113,17 +98,21 @@ public class ServerEngine {
         return reply;
     }
 
-    public ArrayList<String> saveSchedule() {
+    static public ArrayList<String> saveSchedule() {
         ArrayList<String> reply = new ArrayList<>();
 
         // Stores the schedule in a file to restore after pi boot
         // This procedure is called after every update of the schedule
         try {
-
+            if (Scheduler.windows) {
+                scheduleFileName = "C:\\Users\\erikv\\Documents\\Scheduler.txt";
+            }
+            System.out.println(scheduleFileName);
             File initialFile = new File(scheduleFileName);
             OutputStream is = new FileOutputStream(initialFile);
             OutputStreamWriter isr = new OutputStreamWriter(is, "UTF-8");
             BufferedWriter outputStream = new BufferedWriter(isr);
+            System.out.println(outputStream);
 
             // tableData[][] is always populated since saveSchedule() is called after an 
             // update from the client
@@ -143,26 +132,27 @@ public class ServerEngine {
         }
         return reply;
     }
-    
-    
 
-    public void restoreSchedule() {  // called when ServerEngine starts
+    static public void restoreSchedule() {  // called when ServerEngine starts
         ArrayList<String> msg;
         BufferedReader inputStream = null;
 
         try {
-
+            if (Scheduler.windows) {
+                scheduleFileName = "C:\\Users\\erikv\\Documents\\Scheduler.txt";
+            }
+            System.out.println(scheduleFileName);
             File initialFile = new File(scheduleFileName);
             InputStream is = new FileInputStream(initialFile);
             InputStreamReader isr = new InputStreamReader(is, "UTF-8");
             inputStream = new BufferedReader(isr);
 
             for (int col = 0; col < columnCount; col++) {
-                 msg = new ArrayList<>();
+                msg = new ArrayList<>();
                 for (int row = 0; row < rowCount; row++) {
                     msg.add(inputStream.readLine());
                 }
-                newSchedule(msg);
+                ServerEngine.newSchedule(msg);
             }
 
             inputStream.close();
@@ -170,5 +160,15 @@ public class ServerEngine {
         } catch (IOException io) {
             System.err.println(" io exception while reading from " + scheduleFileName);
         }
+    }
+    
+    public TimeValue previousEvent(TimeValue t){
+        TimeValue tprev=null;
+        return tprev;
+    }
+    
+        public TimeValue nextEvent(TimeValue t){
+        TimeValue tnext=null;
+        return tnext;
     }
 }

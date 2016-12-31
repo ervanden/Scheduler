@@ -10,7 +10,7 @@ public class MatrixTableModel extends DefaultTableModel {
     int rowCount = 24 * 4;
     TimeValue[][] tableData = new TimeValue[rowCount][columnCount];
 
-    public MatrixTableModel(PiClient client) {
+    public MatrixTableModel() {
         super();
 
         for (int col = 0; col < columnCount; col++) {
@@ -42,7 +42,7 @@ public class MatrixTableModel extends DefaultTableModel {
             msg.add("getSchedule");
             msg.add(dayName);
 
-            reply = client.send(msg);
+            reply = PiClient.send(msg);
             if (reply.size()==rowCount) {
                 for (int row = 0; row < rowCount; row++) {
                     TimeValue timeValueFromPi = TimeValue.stringToTimeValue(reply.get(row));
@@ -57,12 +57,14 @@ public class MatrixTableModel extends DefaultTableModel {
         }
     }
 
-    public void sendScheduleToServer(PiClient client, int[] selectedColumns) {
+    public void sendScheduleToServer() {
         ArrayList<String> msg;
         ArrayList<String> reply;
-
-        for (int c = 0; c < selectedColumns.length; c++) {  // send only the modified columns
+/* send only the modified columns
+        for (int c = 0; c < selectedColumns.length; c++) {  
             int col = selectedColumns[c];
+*/
+        for (int col=0 ; col<columnCount; col++){
             String dayName = tableData[0][col].dayName();
             System.out.print("sending schedule for " + dayName + " ... ");
 
@@ -71,14 +73,14 @@ public class MatrixTableModel extends DefaultTableModel {
             for (int row = 0; row < rowCount; row++) {
                 msg.add(tableData[row][col].asString());
             }
-            reply = client.send(msg);
+            reply = PiClient.send(msg);
             System.out.println(reply.get(0));  // "ok"
         }
 
         System.out.println("Telling pi to save the schedule ... ");
         msg = new ArrayList<>();
         msg.add("saveSchedule");
-        reply = client.send(msg);
+        reply = PiClient.send(msg);
         System.out.println(reply.get(0));  // "ok"
 
     }

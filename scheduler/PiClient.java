@@ -19,7 +19,7 @@ public class PiClient {
         piPort=port;
     }
 
-    public ArrayList<String> send(ArrayList<String> msg) {
+    static public ArrayList<String> send(ArrayList<String> msg) {
 
         // send msg txt to server and return reply txt from server
         

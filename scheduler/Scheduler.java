@@ -14,6 +14,7 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
+import javax.swing.JButton;
 import javax.swing.JRadioButton;
 import javax.swing.JTextPane;
 import javax.swing.event.ListSelectionEvent;
@@ -22,18 +23,21 @@ import javax.swing.table.DefaultTableCellRenderer;
 
 public class Scheduler extends JPanel implements ActionListener, ListSelectionListener {
 
+    static PiServer piServer;
+    static ServerEngine serverEngine;
+    static boolean windows = false;
+    static PiClient piClient;
+
     MatrixTableModel tm;
 
     JTable table;
     JTextPane msgPane;
     JRadioButton onceButton;
     JRadioButton alwaysButton;
+    JButton sendButton;
 
     boolean onceMode = false;
 
-    PiClient piClient = new PiClient();
-
-    
     @Override
     public void valueChanged(ListSelectionEvent e) {
         if (!e.getValueIsAdjusting()) {
@@ -48,10 +52,6 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
                 }
             }
             table.clearSelection();
-
-            if (selectedRows.length * selectedRows.length > 0) {
-                tm.sendScheduleToServer(piClient, selectedColumns);
-            }
         }
     }
 
@@ -62,11 +62,27 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
     }
 
     void executeAction(String action) {
-        if (action.equals("once")) {
+        if (action.equals("Set once")) {
             onceMode = true;
+            Scheduler.serverEngine.restart();
         }
-        if (action.equals("always")) {
+        if (action.equals("Set always")) {
             onceMode = false;
+        }
+        if (action.equals("Send")) {
+            // update Scheduler on server
+            
+            System.out.println("Sending updated schedule to pi...");
+            tm.sendScheduleToServer();
+            
+            // restart Scheduler on server
+            
+            System.out.println("Telling pi to restart scheduler...");
+            ArrayList<String> msg = new ArrayList<>();
+            ArrayList<String> reply;
+            msg.add("restartScheduler");
+            reply = PiClient.send(msg);
+            System.out.println(reply.get(0));
         }
     }
 
@@ -76,7 +92,7 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
         BoxLayout box = new BoxLayout(this, BoxLayout.PAGE_AXIS);
         this.setLayout(box);
 
-        tm = new MatrixTableModel(piClient);
+        tm = new MatrixTableModel();
 
         table = new JTable(tm);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
@@ -103,12 +119,15 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
         msgScrollPane.setMaximumSize(maximumDimension);
 
         onceButton = new JRadioButton("Set once");
-        onceButton.setActionCommand("once");
+        onceButton.setActionCommand("Set once");
         onceButton.addActionListener(this);
         alwaysButton = new JRadioButton("Set always");
-        alwaysButton.setActionCommand("always");
+        alwaysButton.setActionCommand("Set always");
         alwaysButton.addActionListener(this);
         alwaysButton.setSelected(true);
+        sendButton = new JButton("Send");
+        sendButton.setActionCommand("Send");
+        sendButton.addActionListener(this);
 
         //Group the radio buttons.
         ButtonGroup group = new ButtonGroup();
@@ -121,6 +140,8 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
         ioPane.add(alwaysButton);
         ioPane.add(Box.createRigidArea(new Dimension(10, 0)));
         ioPane.add(onceButton);
+        ioPane.add(Box.createRigidArea(new Dimension(30, 0)));
+        ioPane.add(sendButton);
 
         add(tableScrollPane);
         add(ioPane);
@@ -180,6 +201,8 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
             if (args.length != 3) {
                 usage();
             } else {
+                piClient = new PiClient();
+
                 PiClient.setServerAddress(args[1], Integer.parseInt(args[2]));
 
                 javax.swing.SwingUtilities.invokeLater(new Runnable() {
@@ -189,9 +212,13 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
                 });
             }
 
-        } else if (args[0].equals("server")) {
-            PiServer srv = new PiServer();
-            srv.runServer();
+        } else if (args[0].equals("server") || args[0].equals("server_windows")) {
+            windows = args[0].equals("server_windows");
+            serverEngine = new ServerEngine();
+            serverEngine.restoreSchedule();
+            serverEngine.start(); // spawns a thread and returns
+            piServer = new PiServer();
+            piServer.runServer();
         }
     }
 }
