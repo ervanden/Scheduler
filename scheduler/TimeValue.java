@@ -72,6 +72,11 @@ public class TimeValue extends GregorianCalendar {
                 && (this.month().intValue() == t.month().intValue())
                 && (this.day().intValue() == t.day().intValue());
     }
+    
+    public int secondsLaterThan(TimeValue t){
+        Long l = this.getTimeInMillis()-t.getTimeInMillis();
+       return l.intValue()/1000;
+    }
 
     public String asString() {
         return dayName()

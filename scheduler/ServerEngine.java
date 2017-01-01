@@ -14,6 +14,8 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 public class ServerEngine {
+    
+            static public boolean STATE = false;
 
     static int columnCount = 7;
     static int rowCount = 24 * 4;
@@ -177,13 +179,13 @@ public class ServerEngine {
         }
     }
 
-    private TimeValue previousEvent(String dayName, int hour, int minute) {
+    static public TimeValue previousEvent(String dayName, int hour, int minute) {
         int row = hour * 4 + minute / 15;
         int col = dayToColumn(dayName);
         return tableData[row][col];
     }
 
-    public TimeValue nextEvent(String dayName, int hour, int minute) {
+    static public TimeValue nextEvent(String dayName, int hour, int minute) {
         int row = hour * 4 + minute / 15;
         int col = dayToColumn(dayName);
         row = (row + 1) % rowCount;

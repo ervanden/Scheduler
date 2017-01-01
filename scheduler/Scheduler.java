@@ -88,6 +88,7 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
 
     public Scheduler() {
         super();
+                  
 
         BoxLayout box = new BoxLayout(this, BoxLayout.PAGE_AXIS);
         this.setLayout(box);
