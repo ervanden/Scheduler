@@ -71,12 +71,11 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
         }
         if (action.equals("Send")) {
             // update Scheduler on server
-            
+
             System.out.println("Sending updated schedule to pi...");
             tm.sendScheduleToServer();
-            
+
             // restart Scheduler on server
-            
             System.out.println("Telling pi to restart scheduler...");
             ArrayList<String> msg = new ArrayList<>();
             ArrayList<String> reply;
@@ -88,7 +87,6 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
 
     public Scheduler() {
         super();
-                  
 
         BoxLayout box = new BoxLayout(this, BoxLayout.PAGE_AXIS);
         this.setLayout(box);
@@ -166,12 +164,10 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
                 } else {
                     c.setBackground(Color.pink);
                 }
+            } else if (tm.getOnce(row, column)) {
+                c.setBackground(Color.blue);
             } else {
-                if (tm.getOnce(row, column)) {
-                    c.setBackground(Color.blue);
-                } else {
-                    c.setBackground(Color.cyan);
-                }
+                c.setBackground(Color.cyan);
             }
             return c;
         }
@@ -190,7 +186,7 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
     private static void usage() {
         System.out.println("Usage :");
         System.out.println(" Scheduler.jar client server_ip server_port");
-        System.out.println(" Scheduler.jar server");
+        System.out.println(" Scheduler.jar server schedule_filename");
         System.out.println();
     }
 
@@ -213,13 +209,17 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
                 });
             }
 
-        } else if (args[0].equals("server") || args[0].equals("server_windows")) {
-            windows = args[0].equals("server_windows");
-            serverEngine = new ServerEngine();
-            serverEngine.restoreSchedule();
-            serverEngine.start(); // spawns a thread and returns
-            piServer = new PiServer();
-            piServer.runServer();
+        } else if (args[0].equals("server")) {
+            if (args.length > 1) {
+                serverEngine.scheduleFileName = args[1];
+            } 
+
+                serverEngine = new ServerEngine();
+                serverEngine.restoreSchedule();
+                serverEngine.start(); // spawns a thread and returns
+                piServer = new PiServer();
+                piServer.runServer();
+
         }
     }
 }

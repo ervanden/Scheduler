@@ -2,7 +2,6 @@ package scheduler;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -15,7 +14,9 @@ import java.util.ArrayList;
 
 public class ServerEngine {
     
-            static public boolean STATE = false;
+    // control GPIO based on the schedule
+    
+    static public boolean STATE = false;
 
     static int columnCount = 7;
     static int rowCount = 24 * 4;
@@ -43,7 +44,8 @@ public class ServerEngine {
     }
 
     public ServerEngine() {
-        // control GPIO based on the schedule
+
+        System.out.println("Schedule file name "+scheduleFileName );
         restoreSchedule();  // from scheduleFileName
         
 /* test previousEvent and nextEvent
@@ -62,6 +64,11 @@ public class ServerEngine {
             }
         }
 */
+    }
+    
+    static public boolean scheduleHasData(){
+        return tableData[0][0]!=null;
+        
     }
 
     static public void start() {
