@@ -13,11 +13,24 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 public class ServerEngine {
-    
-    // control GPIO based on the schedule
-    
-    static public boolean STATE = false;
 
+    // control GPIO based on the schedule
+    static public boolean STATE = false;
+    static public boolean expired = false;
+
+    /* expired=true  means that the one time events are no longer to be executed.
+    
+       The expire(tnow) method checks if the current point in time is the last time slot in the schedule.
+       If this is the case, the one-time events in the entire schedule are expired.
+    
+       It can happen that the pi is temporarily down during the last time slot in the schedule
+       and the expiration described above is missed. To catch this, it is always checked if 
+       the current day is not later than the corresponding weekday in the
+       schedule. In this case also, the one-time events in the entire schedule have expired.
+    
+    
+    
+     */
     static int columnCount = 7;
     static int rowCount = 24 * 4;
     static TimeValue[][] tableData = new TimeValue[rowCount][columnCount];
@@ -45,10 +58,10 @@ public class ServerEngine {
 
     public ServerEngine() {
 
-        System.out.println("Schedule file name "+scheduleFileName );
+        System.out.println("Schedule file name " + scheduleFileName);
         restoreSchedule();  // from scheduleFileName
-        
-/* test previousEvent and nextEvent
+
+        /* test previousEvent and nextEvent
         
         for (String day : weekdays) {
             for (int hour = 0; hour < 24; hour++) {
@@ -63,12 +76,12 @@ public class ServerEngine {
                 }
             }
         }
-*/
+         */
     }
-    
-    static public boolean scheduleHasData(){
-        return tableData[0][0]!=null;
-        
+
+    static public boolean scheduleHasData() {
+        return tableData[0][0] != null;
+
     }
 
     static public void start() {
@@ -130,9 +143,6 @@ public class ServerEngine {
         // Stores the schedule in a file to restore after pi boot
         // This procedure is called after every update of the schedule
         try {
-            if (Scheduler.windows) {
-                scheduleFileName = "C:\\Users\\erikv\\Documents\\Scheduler.txt";
-            }
             File initialFile = new File(scheduleFileName);
             OutputStream is = new FileOutputStream(initialFile);
             OutputStreamWriter isr = new OutputStreamWriter(is, "UTF-8");
@@ -163,9 +173,6 @@ public class ServerEngine {
         BufferedReader inputStream = null;
 
         try {
-            if (Scheduler.windows) {
-                scheduleFileName = "C:\\Users\\erikv\\Documents\\Scheduler.txt";
-            }
             File initialFile = new File(scheduleFileName);
             InputStream is = new FileInputStream(initialFile);
             InputStreamReader isr = new InputStreamReader(is, "UTF-8");
@@ -200,5 +207,32 @@ public class ServerEngine {
             col = (col + 1) % 7;
         }
         return tableData[row][col];
+    }
+
+    static public void expire(TimeValue tnow) {
+        /*
+       The expire(tnow) method checks if the current point in time is the last time slot in the schedule.
+       If this is the case, the one-time events in the entire schedule are expired.
+    
+       It can happen that the pi is temporarily down during the last time slot in the schedule
+       and the expiration described above is missed. To catch this, it is always checked if 
+       the current day is not later than the corresponding weekday in the
+       schedule. In this case also, the one-time events in the entire schedule have expired.   
+         */
+        int row = tnow.hour() * 4 + tnow.minute() / 15;
+        int col = dayToColumn(tnow.dayName());
+        
+        if (!expired) {
+            if (!tnow.isSameDateAs(tableData[0][dayToColumn(tnow.dayName())])) {
+                expired = true;
+                return;
+            }
+            // check if this is the last event in the schedule as it was sent from the client
+            // = last row && next day in the schedule is in the past
+            if (row == rowCount-1){
+            
+            }
+
+        }
     }
 }

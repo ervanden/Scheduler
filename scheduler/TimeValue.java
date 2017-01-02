@@ -4,10 +4,8 @@ import java.time.LocalDateTime;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 
-
-
 public class TimeValue extends GregorianCalendar {
-    
+
     public Boolean cyclic;
     public Boolean once;
 
@@ -63,8 +61,14 @@ public class TimeValue extends GregorianCalendar {
         return get(Calendar.MINUTE);
     }
 
-    public void print() {
-        System.out.println(this.asString());
+    public String dateName() {
+        return this.dayName() + " "
+                + this.day() + "/" + this.month() + "/" + this.year() + " "
+                + this.hour() + ":" + this.minute();
+    }
+    
+    public String timeValueName(){
+        return this.dateName()+" "+this.cyclic+" "+this.once;
     }
 
     public boolean isSameDateAs(TimeValue t) {
@@ -72,10 +76,10 @@ public class TimeValue extends GregorianCalendar {
                 && (this.month().intValue() == t.month().intValue())
                 && (this.day().intValue() == t.day().intValue());
     }
-    
-    public int secondsLaterThan(TimeValue t){
-        Long l = this.getTimeInMillis()-t.getTimeInMillis();
-       return l.intValue()/1000;
+
+    public int secondsLaterThan(TimeValue t) {
+        Long l = this.getTimeInMillis() - t.getTimeInMillis();
+        return l.intValue() / 1000;
     }
 
     public String asString() {

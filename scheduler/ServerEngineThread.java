@@ -13,7 +13,7 @@ public class ServerEngineThread extends Thread {
 
     public void run() {
         while (true) {
-        stop = false;
+            stop = false;
             startScheduling();
         }
     }
@@ -86,10 +86,17 @@ public class ServerEngineThread extends Thread {
             while (true) {
 
                 if (fastforward) {
-                    stoppableSleep(1);  // not too fast
+    //                stoppableSleep(1);  // not too fast
                 }
                 if (!fastforward) {
                     tnow = new TimeValue();   // synchronize
+                }
+                
+                // The weekday in the schedule can be today, or N*7 days ago
+                // If it is not today, the one-time events in the entire schedule can be invalidated
+                
+                if (! ServerEngine.cyclicMode){
+                    ServerEngine.checkCyclicMode(tnow);
                 }
 
                 tprev = ServerEngine.previousEvent(tnow.dayName(), tnow.hour(), tnow.minute());
@@ -152,7 +159,11 @@ public class ServerEngineThread extends Thread {
     private boolean getState(TimeValue tschedule, TimeValue today) {
         // get the state of the event in tschedule on the date of today.
         // it is assumed that tschedule and today are the same weekday.
+        System.out.println("   getState schedule =  " + tschedule.timeValueName());
+        System.out.println("   getState now      =  " + today.timeValueName());
+        System.out.println("   isSameDate?      =  " + tschedule.isSameDateAs(today));
         if (tschedule.once) {
+
             if (tschedule.isSameDateAs(today)) {
                 return tschedule.cyclic;
             } else {

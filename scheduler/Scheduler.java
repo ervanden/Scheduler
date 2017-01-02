@@ -210,6 +210,7 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
             }
 
         } else if (args[0].equals("server")) {
+            
             if (args.length > 1) {
                 serverEngine.scheduleFileName = args[1];
             } 
