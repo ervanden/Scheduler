@@ -1,9 +1,8 @@
 package scheduler;
 
-import java.util.Calendar;
-
 public class ServerEngineThread extends Thread {
 
+    private boolean debug = false;
     private boolean stop = false;
     private boolean fastforward = true;
 
@@ -33,7 +32,7 @@ public class ServerEngineThread extends Thread {
 
             }
             if (stop) {
-                System.out.println("startScheduling is asked to stop");
+                //               System.out.println("startScheduling is asked to stop");
                 return;
             }
         }
@@ -41,20 +40,21 @@ public class ServerEngineThread extends Thread {
 
     private void setControl(boolean state, TimeValue tnow) {
         if (ServerEngine.STATE != state) {
-            System.out.println();
-            System.out.print(
-                    tnow.dayName()
-                    + " " + tnow.dayName() + "/" + tnow.month()
-                    + " " + tnow.hour() + ":" + tnow.minute()
-                    + "  SWITCH ");
-            if (state) {
-                System.out.println("ON");
-            } else {
-                System.out.println("OFF");
-            }
-            System.out.println();
             ServerEngine.STATE = state;
 
+        }
+    }
+
+    private void printState(TimeValue tnow) {
+        System.out.print(
+                tnow.dayName()
+                + " " + tnow.day() + "/" + tnow.month()
+                + " " + tnow.hour() + ":" + tnow.minute()
+                + "  SWITCH=");
+        if (ServerEngine.STATE) {
+            System.out.print("ON");
+        } else {
+            System.out.print("OFF");
         }
     }
 
@@ -64,21 +64,21 @@ public class ServerEngineThread extends Thread {
         TimeValue tnow;
         TimeValue tprev;
         TimeValue tnext;
-        boolean currentState, nextState;
+        boolean state, currentState, nextState;
 
         if (!ServerEngine.scheduleHasData()) {
             System.out.println("Schedule has no data. Waiting...");
             stoppableSleep(60);
         } else {
             /*      
-         while (true)
-         {
-         t=now;
-         STATUS := tprev.on
-         sleep(tnext-t)
-         STATUS := tnext.on
-         sleep(5 min)
-         }
+             while (true)
+             {
+             t=now;
+             STATUS := tprev.on
+             sleep(tnext-t)
+             STATUS := tnext.on
+             sleep(5 min)
+             }
              */
 
             tnow = new TimeValue(); //compiler needs initialization
@@ -86,53 +86,61 @@ public class ServerEngineThread extends Thread {
             while (true) {
 
                 if (fastforward) {
-    //                stoppableSleep(1);  // not too fast
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException ie) {
+                    }
                 }
+
                 if (!fastforward) {
                     tnow = new TimeValue();   // synchronize
                 }
-                
-                // The weekday in the schedule can be today, or N*7 days ago
-                // If it is not today, the one-time events in the entire schedule can be invalidated
-                
-                if (! ServerEngine.cyclicMode){
-                    ServerEngine.checkCyclicMode(tnow);
-                }
+
+                // expire if we are one week later than the same day in the schedule
+                ServerEngine.expireOnDate(tnow);
 
                 tprev = ServerEngine.previousEvent(tnow.dayName(), tnow.hour(), tnow.minute());
                 tnext = ServerEngine.nextEvent(tnow.dayName(), tnow.hour(), tnow.minute());
-
-                TimeValue p = tprev;
-                TimeValue n = tnext;
-                System.out.println(
-                        p.dayName() + " " + p.hour() + ":" + p.minute()
-                        + " < " + tnow.dayName() + " " + tnow.hour() + ":" + tnow.minute() + "  < "
-                        + n.dayName() + " " + n.hour() + ":" + n.minute()
-                );
-
+                if (debug) {
+                    TimeValue p = tprev;
+                    TimeValue n = tnext;
+                    System.out.println(
+                            p.dayName() + " " + p.hour() + ":" + p.minute()
+                            + " < " + tnow.dayName() + " " + tnow.hour() + ":" + tnow.minute() + "  < "
+                            + n.dayName() + " " + n.hour() + ":" + n.minute()
+                    );
+                }
                 int secondsToNextEvent = tnext.secondsLaterThan(tnow);
-                System.out.println("seconds to next event = " + secondsToNextEvent);
-
-                currentState = getState(tprev, tnow);
-                System.out.println("current state according to schedule = " + currentState);
-
-                long milliSeconds = 0;
-                if (!tnext.dayName().equals(tnow.dayName())) {
-                    // the next event is tomorrow, so we have to compare the date of tomorrow 
-                    // with the date of the event in the schedule to see if 'once' applies.
-                    milliSeconds = tnow.getTimeInMillis();
-                    tnow.add(TimeValue.DATE, 1);
-                }
-                nextState = getState(tnext, tnow);
-                System.out.println("next state according to schedule = " + nextState);
-
-                if (milliSeconds > 0) { // means that tnow was set to tomorrow. Roll back to today
-                    tnow.setTimeInMillis(milliSeconds);
+                if (debug) {
+                    System.out.println("seconds to next event = " + secondsToNextEvent);
                 }
 
+                /* tprev is always on the same day as tnow */
+                currentState = getState(tprev);
+                if (debug) {
+                    System.out.println("current state according to schedule = " + currentState);
+                }
+
+                state = ServerEngine.STATE;
                 setControl(currentState, tnow);
+                if (ServerEngine.STATE != state) {
+                    printState(tnow);
+                    System.out.println("  <-----------");
+                }
 
-                System.out.println("Sleeping " + secondsToNextEvent);
+                ServerEngine.expireOnEndOfSchedule(tnow);
+                // getState will from now on only be called for events after tnow.
+                // So if tnow is in the last timeslot of the schedule, from now on
+                // all one-time events have expired
+
+                nextState = getState(tnext);
+                if (debug) {
+                    System.out.println("next state according to schedule = " + nextState);
+                }
+
+                if (debug) {
+                    System.out.println("Sleeping " + secondsToNextEvent);
+                }
 
                 // roll time forward            
                 if (fastforward) {
@@ -141,9 +149,18 @@ public class ServerEngineThread extends Thread {
                     stoppableSleep(secondsToNextEvent);
                 }
 
+                state = ServerEngine.STATE;
                 setControl(nextState, tnow);
+                printState(tnow);
+                if (ServerEngine.STATE != state) {
+                    System.out.println("  <-----------");
+                } else {
+                    System.out.println();
+                };
 
-                System.out.println("Sleeping " + 5 * 60);
+                if (debug) {
+                    System.out.println("Sleeping " + 5 * 60);
+                }
 
                 if (fastforward) {
                     tnow.add(TimeValue.SECOND, 5 * 60);
@@ -151,26 +168,50 @@ public class ServerEngineThread extends Thread {
                     stoppableSleep(5 * 60);
                 }
 
+                System.out.println();
+
             }
         }
 
     }
+    /*
+     private boolean getState(TimeValue tschedule, TimeValue today) {
+     // get the state of the event in tschedule on the date of today.
+     // it is assumed that tschedule and today are the same weekday.
+     if (debug) {
+     System.out.println("   getState schedule =  " + tschedule.timeValueName());
+     System.out.println("   getState now      =  " + today.timeValueName());
+     System.out.println("   isSameDate?      =  " + tschedule.isSameDateAs(today));
+     }
 
-    private boolean getState(TimeValue tschedule, TimeValue today) {
+     if (tschedule.once) {
+     if (tschedule.isSameDateAs(today)) {
+     return tschedule.on;
+     } else {
+     return !tschedule.on;
+     }
+     } else {
+     return tschedule.on;
+     }
+     }
+     */
+
+    private boolean getState(TimeValue tschedule) {
         // get the state of the event in tschedule on the date of today.
         // it is assumed that tschedule and today are the same weekday.
-        System.out.println("   getState schedule =  " + tschedule.timeValueName());
-        System.out.println("   getState now      =  " + today.timeValueName());
-        System.out.println("   isSameDate?      =  " + tschedule.isSameDateAs(today));
-        if (tschedule.once) {
+        if (debug) {
+            System.out.println("   getState schedule =  " + tschedule.timeValueName());
+        }
 
-            if (tschedule.isSameDateAs(today)) {
-                return tschedule.cyclic;
+        if (ServerEngine.expired) {
+            if (tschedule.once) {
+                return tschedule.on;
             } else {
-                return !tschedule.cyclic;
+                return !tschedule.on;
             }
-        } else {
-            return tschedule.cyclic;
+        } else { // not expired
+            return tschedule.on;
         }
     }
+
 }

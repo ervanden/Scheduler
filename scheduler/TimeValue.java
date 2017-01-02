@@ -6,7 +6,7 @@ import java.util.GregorianCalendar;
 
 public class TimeValue extends GregorianCalendar {
 
-    public Boolean cyclic;
+    public Boolean on;
     public Boolean once;
 
     public TimeValue() { // returns an object corresponding to now
@@ -17,7 +17,7 @@ public class TimeValue extends GregorianCalendar {
                 now.getDayOfMonth(),
                 now.getHour(),
                 now.getMinute());
-        cyclic = null;
+        on = null;
     }
 
     public TimeValue(TimeValue t) {   // copy constructor
@@ -68,7 +68,7 @@ public class TimeValue extends GregorianCalendar {
     }
     
     public String timeValueName(){
-        return this.dateName()+" "+this.cyclic+" "+this.once;
+        return this.dateName()+" "+this.on+" "+this.once;
     }
 
     public boolean isSameDateAs(TimeValue t) {
@@ -89,7 +89,7 @@ public class TimeValue extends GregorianCalendar {
                 + " " + day()
                 + " " + hour()
                 + " " + minute()
-                + " " + cyclic
+                + " " + on
                 + " " + once;
 
     }
@@ -110,7 +110,7 @@ public class TimeValue extends GregorianCalendar {
                 Integer.parseInt(day),
                 Integer.parseInt(hour),
                 Integer.parseInt(minute));
-        t.cyclic = Boolean.parseBoolean(cyclic);
+        t.on = Boolean.parseBoolean(cyclic);
         t.once = Boolean.parseBoolean(once);
         return t;
 

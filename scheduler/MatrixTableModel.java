@@ -22,7 +22,7 @@ public class MatrixTableModel extends DefaultTableModel {
                     TimeValue slot = new TimeValue(day);
                     slot.set(Calendar.HOUR_OF_DAY, hr);
                     slot.set(Calendar.MINUTE, min);
-                    slot.cyclic = false;
+                    slot.on = false;
                     slot.once = false;
                     tableData[row][col] = slot;
                     row++;
@@ -43,11 +43,11 @@ public class MatrixTableModel extends DefaultTableModel {
             msg.add(dayName);
 
             reply = PiClient.send(msg);
-            if (reply.size()==rowCount) {
+            if (reply.size() == rowCount) {
                 for (int row = 0; row < rowCount; row++) {
                     TimeValue timeValueFromPi = TimeValue.stringToTimeValue(reply.get(row));
                     TimeValue timeValueCurrent = tableData[row][col];
-                    timeValueCurrent.cyclic = timeValueFromPi.cyclic;
+                    timeValueCurrent.on = timeValueFromPi.on;
                     if (timeValueCurrent.isSameDateAs(timeValueFromPi)) {
                         timeValueCurrent.once = timeValueFromPi.once;
                     }
@@ -60,22 +60,16 @@ public class MatrixTableModel extends DefaultTableModel {
     public void sendScheduleToServer() {
         ArrayList<String> msg;
         ArrayList<String> reply;
-/* send only the modified columns
-        for (int c = 0; c < selectedColumns.length; c++) {  
-            int col = selectedColumns[c];
-*/
-        for (int col=0 ; col<columnCount; col++){
-            String dayName = tableData[0][col].dayName();
-            System.out.print("sending schedule for " + dayName + " ... ");
 
-            msg = new ArrayList<>();
-            msg.add("newSchedule");
+        msg = new ArrayList<>();
+        msg.add("newSchedule");
+        for (int col = 0; col < columnCount; col++) {
             for (int row = 0; row < rowCount; row++) {
                 msg.add(tableData[row][col].asString());
             }
-            reply = PiClient.send(msg);
-            System.out.println(reply.get(0));  // "ok"
         }
+        reply = PiClient.send(msg);
+        System.out.println(reply.get(0));  // "ok"
 
         System.out.println("Telling pi to save the schedule ... ");
         msg = new ArrayList<>();
@@ -125,15 +119,15 @@ public class MatrixTableModel extends DefaultTableModel {
     }
 
     public void toggle(int row, int col) {
-        tableData[row][col].cyclic = !tableData[row][col].cyclic;
+        tableData[row][col].on = !tableData[row][col].on;
     }
 
     public Boolean getCyclic(int row, int col) {
-        return tableData[row][col].cyclic;
+        return tableData[row][col].on;
     }
 
     public void setCyclic(int row, int col, Boolean value) {
-        tableData[row][col].cyclic = value;
+        tableData[row][col].on = value;
     }
 
     public Boolean getOnce(int row, int col) {
