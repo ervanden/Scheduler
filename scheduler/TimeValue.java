@@ -77,32 +77,6 @@ public class TimeValue extends GregorianCalendar {
                 && (this.day().intValue() == t.day().intValue());
     }
 
-    public boolean isLaterDateThan(TimeValue t) {
-        if (this.year().intValue() > t.year().intValue()) {
-            return true;
-        } else if (this.year().intValue() == t.year().intValue()) {
-
-            if (this.month().intValue() > t.month().intValue()) {
-                return true;
-            } else if (this.month().intValue() == t.month().intValue()) {
-
-                if (this.day().intValue() > t.day().intValue()) {
-                    return true;
-                }
-
-            }
-
-        }
-        return false;
-
-    }
-
-
-public int secondsLaterThan(TimeValue t) {
-        Long l = this.getTimeInMillis() - t.getTimeInMillis();
-        return l.intValue() / 1000;
-    }
-
     public String asString() {
         return dayName()
                 + " " + year()

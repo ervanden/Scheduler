@@ -39,7 +39,7 @@ class ServerThread extends Thread {
                 reply = Scheduler.serverEngine.getSchedule(text);
             } else if (command.equals("saveSchedule")) {
                 reply = Scheduler.serverEngine.saveSchedule();
-                            } else if (command.equals("restartScheduler")) {
+            } else if (command.equals("restartScheduler")) {
                 reply = Scheduler.serverEngine.restart();
             } else {
                 System.err.println("unknown command from client : <" + command + ">");
@@ -59,7 +59,7 @@ class ServerThread extends Thread {
 
 public class PiServer {
 
-    public void runServer() { // throws Exception {
+    public void runServer() { 
 
         System.out.println("Starting piServer...");
         int portNumber = 6789;

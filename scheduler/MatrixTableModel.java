@@ -121,12 +121,9 @@ public class MatrixTableModel extends DefaultTableModel {
     }
 
     public void setValueAt(Object value, int row, int col) {
-        // fireTableDataChanged();
+        // cells are not editable
     }
 
-    public void toggle(int row, int col) {
-        tableData[row][col].on = !tableData[row][col].on;
-    }
 
     public Boolean getCyclic(int row, int col) {
         return tableData[row][col].on;

@@ -18,19 +18,9 @@ public class ServerEngine {
     static public boolean STATE = false;
     static public boolean expired = false;
 
-    /* expired=true  means that the one time events are no longer to be executed.
-    
-     The expire(tnow) method checks if the current point in time is the last time slot in the schedule.
-     If this is the case, the one-time events in the entire schedule are expired.
-    
-     It can happen that the pi is temporarily down during the last time slot in the schedule
-     and the expiration described above is missed. To catch this, it is always checked if 
-     the current day is not later than the corresponding weekday in the
-     schedule. In this case also, the one-time events in the entire schedule have expired.
-    
-    
-    
-     */
+    // expired=true  means that the current time is after the dates in the schedule
+    // and the one time events are no longer to be executed.
+
     static int columnCount = 7;
     static int rowCount = 24 * 4;
     static TimeValue[][] tableData = new TimeValue[rowCount][columnCount];
@@ -41,8 +31,7 @@ public class ServerEngine {
     static ServerEngineThread serverEngineThread = new ServerEngineThread();
 
     {
-
-        weekdays.add("MONDAY");
+        weekdays.add("MONDAY");  // will all be overwritten when schedule is restored
         weekdays.add("TUESDAY");
         weekdays.add("WEDNESDAY");
         weekdays.add("THURSDAY");
@@ -108,15 +97,11 @@ public class ServerEngine {
         for (String line : timeValueList) {
             TimeValue timeValue = TimeValue.stringToTimeValue(line);
             weekdays.set(col, timeValue.dayName());
-            System.out.println("received col=" + col + " row=" + row + " " + timeValue.asString());
             tableData[row][col] = timeValue;
-            //           System.out.println("row " + row);
             row = (row + 1) % rowCount;
-//           System.out.println("inc row " + row);
             if (row == 0) {
                 col++;
             }
-//            System.out.println("inc col " + col);
         }
 
         ArrayList<String> reply = new ArrayList<>();
@@ -168,8 +153,8 @@ public class ServerEngine {
             reply.add("ok");
 
         } catch (IOException io) {
-            System.err.println(" io exception while writing to " + scheduleFileName);
-            reply.add(" io exception while writing to " + scheduleFileName);
+            System.err.println("io exception while writing to " + scheduleFileName);
+            reply.add("io exception while writing to " + scheduleFileName);
         }
         return reply;
     }
@@ -218,10 +203,9 @@ public class ServerEngine {
     static public void expireOnDate(TimeValue tnow) {
 
         if (!expired) {
- //            System.out.println("expire on end of schedule ");
             if (!tnow.isSameDateAs(tableData[0][dayToColumn(tnow.dayName())])) {
                 expired = true;
- //                            System.out.println("expire on end of schedule : expired");
+                            System.out.println("expire on date ");
             }
         }
     }
@@ -232,9 +216,10 @@ public class ServerEngine {
             // check if tnow is in the last time slot of the schedule
             int row = tnow.hour() * 4 + tnow.minute() / 15;
             int col = dayToColumn(tnow.dayName());
-// System.out.println("expire on end of schedule row="+row+" col="+col);
+
             if ((row == (rowCount - 1)) && (col == (columnCount - 1))) {
                 expired = true;
+                 System.out.println("expire on end of schedule ");
             }
         }
     }
