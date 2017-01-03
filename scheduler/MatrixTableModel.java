@@ -46,10 +46,16 @@ public class MatrixTableModel extends DefaultTableModel {
             if (reply.size() == rowCount) {
                 for (int row = 0; row < rowCount; row++) {
                     TimeValue timeValueFromPi = TimeValue.stringToTimeValue(reply.get(row));
-                    TimeValue timeValueCurrent = tableData[row][col];
-                    timeValueCurrent.on = timeValueFromPi.on;
-                    if (timeValueCurrent.isSameDateAs(timeValueFromPi)) {
-                        timeValueCurrent.once = timeValueFromPi.once;
+                    TimeValue timeValueSchedule = tableData[row][col];
+                    if (timeValueSchedule.isSameDateAs(timeValueFromPi)) {
+                        timeValueSchedule.on = timeValueFromPi.on;
+                        timeValueSchedule.once = timeValueFromPi.once;
+                    } else { //expired
+                        timeValueSchedule.on = timeValueFromPi.on;
+                        if (timeValueFromPi.once) {
+                            timeValueSchedule.on = !timeValueFromPi.on;
+                        }
+                        timeValueSchedule.once = false;
                     }
 
                 }

@@ -218,8 +218,10 @@ public class ServerEngine {
     static public void expireOnDate(TimeValue tnow) {
 
         if (!expired) {
+ //            System.out.println("expire on end of schedule ");
             if (!tnow.isSameDateAs(tableData[0][dayToColumn(tnow.dayName())])) {
                 expired = true;
+ //                            System.out.println("expire on end of schedule : expired");
             }
         }
     }
@@ -230,7 +232,7 @@ public class ServerEngine {
             // check if tnow is in the last time slot of the schedule
             int row = tnow.hour() * 4 + tnow.minute() / 15;
             int col = dayToColumn(tnow.dayName());
-            
+// System.out.println("expire on end of schedule row="+row+" col="+col);
             if ((row == (rowCount - 1)) && (col == (columnCount - 1))) {
                 expired = true;
             }

@@ -11,9 +11,22 @@ public class ServerEngineThread extends Thread {
     }
 
     public void run() {
-        while (true) {
-            stop = false;
-            startScheduling();
+
+        /*       
+        TimeValue tnow=new TimeValue();
+        int i=0;
+        while (i<5000){
+            i++;
+            tnow.add(TimeValue.SECOND, 5 * 60);
+                                printState(tnow);
+                    System.out.println("  <-----------");
+        }
+         */
+        if (true) {
+            while (true) {
+                stop = false;
+                startScheduling();
+            }
         }
     }
 
@@ -64,6 +77,7 @@ public class ServerEngineThread extends Thread {
         TimeValue tnow;
         TimeValue tprev;
         TimeValue tnext;
+        TimeValue tomorrow;
         boolean state, currentState, nextState;
 
         if (!ServerEngine.scheduleHasData()) {
@@ -82,6 +96,9 @@ public class ServerEngineThread extends Thread {
              */
 
             tnow = new TimeValue(); //compiler needs initialization
+
+            printState(tnow);
+            System.out.println("  <----------- INITIAL");
 
             while (true) {
 
@@ -111,14 +128,17 @@ public class ServerEngineThread extends Thread {
                     );
                 }
                 int secondsToNextEvent = tnext.secondsLaterThan(tnow);
-                if (debug) {
+                if (true) {
                     System.out.println("seconds to next event = " + secondsToNextEvent);
+                    if (secondsToNextEvent < 0) { // we crossed the end of the schedule
+                        secondsToNextEvent = secondsToNextEvent + 7 * 24 * 60 * 60;
+                    }
                 }
 
                 /* tprev is always on the same day as tnow */
                 currentState = getState(tprev);
                 if (debug) {
-                    System.out.println("current state according to schedule = " + currentState);
+                    System.out.println("current state according to schedule (tprev)  = " + currentState);
                 }
 
                 state = ServerEngine.STATE;
@@ -129,13 +149,12 @@ public class ServerEngineThread extends Thread {
                 }
 
                 ServerEngine.expireOnEndOfSchedule(tnow);
-                // getState will from now on only be called for events after tnow.
-                // So if tnow is in the last timeslot of the schedule, from now on
-                // all one-time events have expired
+                // getState will from now on only be called for future events.
+                // If tnow is in the last timeslot of the schedule, all future events expire
 
                 nextState = getState(tnext);
                 if (debug) {
-                    System.out.println("next state according to schedule = " + nextState);
+                    System.out.println("next state according to schedule (tnext) = " + nextState);
                 }
 
                 if (debug) {
@@ -153,10 +172,11 @@ public class ServerEngineThread extends Thread {
                 setControl(nextState, tnow);
                 printState(tnow);
                 if (ServerEngine.STATE != state) {
+
                     System.out.println("  <-----------");
                 } else {
                     System.out.println();
-                };
+                }
 
                 if (debug) {
                     System.out.println("Sleeping " + 5 * 60);
@@ -168,12 +188,11 @@ public class ServerEngineThread extends Thread {
                     stoppableSleep(5 * 60);
                 }
 
-                System.out.println();
-
             }
         }
 
     }
+
     /*
      private boolean getState(TimeValue tschedule, TimeValue today) {
      // get the state of the event in tschedule on the date of today.
@@ -195,7 +214,6 @@ public class ServerEngineThread extends Thread {
      }
      }
      */
-
     private boolean getState(TimeValue tschedule) {
         // get the state of the event in tschedule on the date of today.
         // it is assumed that tschedule and today are the same weekday.
@@ -205,9 +223,9 @@ public class ServerEngineThread extends Thread {
 
         if (ServerEngine.expired) {
             if (tschedule.once) {
-                return tschedule.on;
-            } else {
                 return !tschedule.on;
+            } else {
+                return tschedule.on;
             }
         } else { // not expired
             return tschedule.on;

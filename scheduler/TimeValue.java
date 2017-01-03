@@ -66,9 +66,9 @@ public class TimeValue extends GregorianCalendar {
                 + this.day() + "/" + this.month() + "/" + this.year() + " "
                 + this.hour() + ":" + this.minute();
     }
-    
-    public String timeValueName(){
-        return this.dateName()+" "+this.on+" "+this.once;
+
+    public String timeValueName() {
+        return this.dateName() + " " + this.on + " " + this.once;
     }
 
     public boolean isSameDateAs(TimeValue t) {
@@ -77,7 +77,28 @@ public class TimeValue extends GregorianCalendar {
                 && (this.day().intValue() == t.day().intValue());
     }
 
-    public int secondsLaterThan(TimeValue t) {
+    public boolean isLaterDateThan(TimeValue t) {
+        if (this.year().intValue() > t.year().intValue()) {
+            return true;
+        } else if (this.year().intValue() == t.year().intValue()) {
+
+            if (this.month().intValue() > t.month().intValue()) {
+                return true;
+            } else if (this.month().intValue() == t.month().intValue()) {
+
+                if (this.day().intValue() > t.day().intValue()) {
+                    return true;
+                }
+
+            }
+
+        }
+        return false;
+
+    }
+
+
+public int secondsLaterThan(TimeValue t) {
         Long l = this.getTimeInMillis() - t.getTimeInMillis();
         return l.intValue() / 1000;
     }
