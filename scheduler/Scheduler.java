@@ -20,20 +20,24 @@ import javax.swing.JTextPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
 
 public class Scheduler extends JPanel implements ActionListener, ListSelectionListener {
 
     static PiServer piServer;
     static ServerEngine serverEngine;
-    static int server_verbosity = 0;
+    static int server_verbosity;
 
     static PiClient piClient;
-    static int client_verbosity = 0;
+    static String server_host;
+    static int server_port;
+    static int client_verbosity;
 
     MatrixTableModel tm;
 
     JTable table;
-    JTextPane msgPane;
+    static JTextPane msgPane;  // because of static method to write to this pane
     JRadioButton onceButton;
     JRadioButton alwaysButton;
     JButton sendButton;
@@ -59,7 +63,6 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
 
     public void actionPerformed(ActionEvent e) {
         String action = e.getActionCommand();
-        System.out.println("action " + action);
         executeAction(action);
     }
 
@@ -74,16 +77,16 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
         if (action.equals("Send")) {
             // update Scheduler on server
 
-            System.out.println("Sending updated schedule to pi...");
+            clientMessage("Sending updated schedule to pi...");
             tm.sendScheduleToServer();
 
             // restart Scheduler on server
-            System.out.println("Telling pi to restart scheduler...");
+            clientMessage("Telling pi to restart scheduler...");
             ArrayList<String> msg = new ArrayList<>();
             ArrayList<String> reply;
             msg.add("restartScheduler");
             reply = PiClient.send(msg);
-            System.out.println(reply.get(0));
+            clientMessage(reply.get(0));
         }
     }
 
@@ -147,6 +150,17 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
         add(tableScrollPane);
         add(ioPane);
         add(msgScrollPane);
+        
+        tm.getScheduleFromServer();
+    }
+    
+   static     public void clientMessage(String msg) {
+        Document doc = msgPane.getDocument();
+        try {
+            doc.insertString(doc.getLength(), msg + "\n", null);
+        } catch (BadLocationException blex) {
+        }
+        msgPane.setCaretPosition(doc.getLength());
     }
 
     class MyRenderer extends DefaultTableCellRenderer {
@@ -197,28 +211,56 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
         if (args.length == 0) {
             usage();
         } else if (args[0].equals("client")) {
-            if (args.length < 3) {
-                usage();
-            } else {
-                piClient = new PiClient();
+            server_host = "localhost";
+            server_port = 6789;
+            client_verbosity = 0;
 
-                PiClient.setServerAddress(args[1], Integer.parseInt(args[2]));
-
-                javax.swing.SwingUtilities.invokeLater(new Runnable() {
-                    public void run() {
-                        createAndShowGUI();
-                    }
-                });
+            for (int arg = 2; arg <= args.length; arg++) {
+                String[] s = args[arg - 1].split("=");
+                if (s[0].equals("server")) {
+                    server_host = s[1];
+                } else if (s[0].equals("port")) {
+                    server_port = Integer.parseInt(s[1]);
+                } else if (s[0].equals("verbosity")) {
+                    client_verbosity = Integer.parseInt(s[1]);
+                }
             }
+
+            TimeValue now = new TimeValue();
+            System.out.println("Client starts at " + now.dateName());
+            System.out.println("server=" + server_host);
+            System.out.println("port=" + server_port);
+            System.out.println("verbosity=" + client_verbosity);
+            System.out.println();
+
+            piClient = new PiClient();
+
+            PiClient.setServerAddress(server_host,server_port);
+
+            javax.swing.SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                    createAndShowGUI();
+                }
+            });
 
         } else if (args[0].equals("server")) {
 
-            for (int arg=2; arg<=args.length; arg++){
-               System.out.println("arg "+arg+" = "+args[arg-1]);
+            serverEngine.scheduleFileName = "/home/pi/Scheduler/Schedule.txt";
+            server_verbosity = 0;
+            for (int arg = 2; arg <= args.length; arg++) {
+                String[] s = args[arg - 1].split("=");
+                if (s[0].equals("file")) {
+                    serverEngine.scheduleFileName = s[1];
+                } else if (s[0].equals("verbosity")) {
+                    server_verbosity = Integer.parseInt(s[1]);
+                }
             }
-            if (args.length > 1) {
-                serverEngine.scheduleFileName = args[1];
-            }
+
+            TimeValue now = new TimeValue();
+            System.out.println("Scheduler starts at " + now.dateName());
+            System.out.println("file=" + serverEngine.scheduleFileName);
+            System.out.println("verbosity=" + server_verbosity);
+            System.out.println();
 
             serverEngine = new ServerEngine();
             serverEngine.restoreSchedule();

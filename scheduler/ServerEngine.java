@@ -47,7 +47,6 @@ public class ServerEngine {
 
     public ServerEngine() {
 
-        System.out.println("Schedule file name " + scheduleFileName);
         restoreSchedule();  // from scheduleFileName
 
         /* test previousEvent and nextEvent

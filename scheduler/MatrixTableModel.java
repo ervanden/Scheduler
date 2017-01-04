@@ -29,8 +29,9 @@ public class MatrixTableModel extends DefaultTableModel {
                 }
             }
         }
+    }
 
-        // load the values from the server
+    public void getScheduleFromServer() {
         // If the reply is an empty list , this means that pi has no schedule yet
         for (int col = 0; col < columnCount; col++) {
 
@@ -38,7 +39,7 @@ public class MatrixTableModel extends DefaultTableModel {
             ArrayList<String> reply;
 
             String dayName = tableData[0][col].dayName();
-            System.out.println("getSchedule " + dayName);
+            Scheduler.clientMessage("Retrieving schedule from pi for " + dayName);
             msg.add("getSchedule");
             msg.add(dayName);
 
@@ -75,13 +76,13 @@ public class MatrixTableModel extends DefaultTableModel {
             }
         }
         reply = PiClient.send(msg);
-        System.out.println(reply.get(0));  // "ok"
+        Scheduler.clientMessage(reply.get(0));  // "ok"
 
-        System.out.println("Telling pi to save the schedule ... ");
+        Scheduler.clientMessage("Telling pi to save the schedule ... ");
         msg = new ArrayList<>();
         msg.add("saveSchedule");
         reply = PiClient.send(msg);
-        System.out.println(reply.get(0));  // "ok"
+        Scheduler.clientMessage(reply.get(0));  // "ok"
 
     }
 
@@ -123,7 +124,6 @@ public class MatrixTableModel extends DefaultTableModel {
     public void setValueAt(Object value, int row, int col) {
         // cells are not editable
     }
-
 
     public Boolean getCyclic(int row, int col) {
         return tableData[row][col].on;
