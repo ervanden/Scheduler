@@ -20,7 +20,6 @@ public class ServerEngine {
 
     // expired=true  means that the current time is after the dates in the schedule
     // and the one time events are no longer to be executed.
-
     static int columnCount = 7;
     static int rowCount = 24 * 4;
     static TimeValue[][] tableData = new TimeValue[rowCount][columnCount];
@@ -133,12 +132,13 @@ public class ServerEngine {
 
         // Stores the schedule in a file to restore after pi boot
         // This procedure is called after every update of the schedule
+        
+        System.out.println("Saving the schedule to " + scheduleFileName);
         try {
             File initialFile = new File(scheduleFileName);
             OutputStream is = new FileOutputStream(initialFile);
             OutputStreamWriter isr = new OutputStreamWriter(is, "UTF-8");
             BufferedWriter outputStream = new BufferedWriter(isr);
-            System.out.println(outputStream);
 
             // tableData[][] is always populated since saveSchedule() is called after an 
             // update from the client
@@ -205,7 +205,7 @@ public class ServerEngine {
         if (!expired) {
             if (!tnow.isSameDateAs(tableData[0][dayToColumn(tnow.dayName())])) {
                 expired = true;
-                            System.out.println("expire on date ");
+                System.out.println("expire on date ");
             }
         }
     }
@@ -219,7 +219,7 @@ public class ServerEngine {
 
             if ((row == (rowCount - 1)) && (col == (columnCount - 1))) {
                 expired = true;
-                 System.out.println("expire on end of schedule ");
+                System.out.println("expire on end of schedule ");
             }
         }
     }

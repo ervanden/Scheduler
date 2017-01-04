@@ -2,26 +2,15 @@ package scheduler;
 
 public class ServerEngineThread extends Thread {
 
-    private boolean debug = false;
+    private boolean debug = true;
     private boolean stop = false;
-    private boolean fastforward = true;
+    private boolean fastforward = false;
 
     public ServerEngineThread() {
         super("ServerEngineThread");
     }
 
     public void run() {
-
-        /*       
-         TimeValue tnow=new TimeValue();
-         int i=0;
-         while (i<5000){
-         i++;
-         tnow.add(TimeValue.SECOND, 5 * 60);
-         printState(tnow);
-         System.out.println("  <-----------");
-         }
-         */
         if (true) {
             while (true) {
                 stop = false;
@@ -45,7 +34,7 @@ public class ServerEngineThread extends Thread {
 
             }
             if (stop) {
-                //               System.out.println("startScheduling is asked to stop");
+                System.out.println("stoppableSleep is asked to stop");
                 return;
             }
         }
@@ -77,7 +66,7 @@ public class ServerEngineThread extends Thread {
         TimeValue tnow;
         TimeValue tprev;
         TimeValue tnext;
-        TimeValue tomorrow;
+
         boolean state, currentState, nextState;
 
         if (!ServerEngine.scheduleHasData()) {
@@ -98,9 +87,9 @@ public class ServerEngineThread extends Thread {
             tnow = new TimeValue(); //compiler needs initialization
 
             printState(tnow);
-            System.out.println("  <----------- INITIALIZED VALUE");
+            System.out.println("  <----------- ServerEngine STATE");
 
-            while (true) {
+            while (!stop) {
 
                 /* if fastforward, sleeps are replaced by increasing the time of tnow
                  and tnow is not syncronized with the real time after every loop
@@ -147,6 +136,9 @@ public class ServerEngineThread extends Thread {
                     System.out.println("current state according to schedule (tprev)  = " + currentState);
                 }
 
+                if (stop) {
+                    return;
+                }
                 state = ServerEngine.STATE;
                 setControl(currentState, tnow);
                 if (ServerEngine.STATE != state) {
@@ -154,6 +146,9 @@ public class ServerEngineThread extends Thread {
                     System.out.println("  <-----------");
                 }
 
+                if (stop) {
+                    return;
+                }
                 ServerEngine.expireOnEndOfSchedule(tnow);
                 // getState will from now on only be called for future events.
                 // If tnow is in the last timeslot of the schedule, all future events expire
@@ -167,37 +162,45 @@ public class ServerEngineThread extends Thread {
                     System.out.println("Sleeping " + secondsToNextEvent);
                 }
 
-                // roll time forward            
-                if (fastforward) {
-                    tnow.add(TimeValue.SECOND, secondsToNextEvent);
-                } else {
+                if (!fastforward) {
                     stoppableSleep(secondsToNextEvent);
                 }
+                // roll time forward instead of creating a new tnow
+                tnow.add(TimeValue.SECOND, secondsToNextEvent);
 
-                state = ServerEngine.STATE;
-                setControl(nextState, tnow);
-                printState(tnow);
-                if (ServerEngine.STATE != state) {
-                    System.out.println("  <-----------");
-                } else {
-                    System.out.println();
+                if (stop) {
+                    return;
                 }
-
+                if (true) { // print state on every iteration
+                    state = ServerEngine.STATE;
+                    setControl(nextState, tnow);
+                    printState(tnow);
+                    if (ServerEngine.STATE != state) {
+                        System.out.println("  <-----------");
+                    } else {
+                        System.out.println();
+                    }
+                } else { // print only if state switched
+                    state = ServerEngine.STATE;
+                    setControl(nextState, tnow);
+                    if (ServerEngine.STATE != state) {
+                        printState(tnow);
+                        System.out.println("  <-----------");
+                    }
+                }
                 if (debug) {
                     System.out.println("Sleeping " + 5 * 60);
                 }
 
-                if (fastforward) {
-                    tnow.add(TimeValue.SECOND, 5 * 60);
-                } else {
+                if (!fastforward) {
                     stoppableSleep(5 * 60);
                 }
+                tnow.add(TimeValue.SECOND, 5 * 60);
 
             }
         }
 
     }
-
 
     private boolean getState(TimeValue tschedule) {
         // get the state of the event in tschedule on the date of today.

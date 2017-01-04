@@ -25,8 +25,10 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
 
     static PiServer piServer;
     static ServerEngine serverEngine;
-    static boolean windows = false;
+    static int server_verbosity = 0;
+
     static PiClient piClient;
+    static int client_verbosity = 0;
 
     MatrixTableModel tm;
 
@@ -185,8 +187,8 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
 
     private static void usage() {
         System.out.println("Usage :");
-        System.out.println(" Scheduler.jar client server_ip server_port");
-        System.out.println(" Scheduler.jar server schedule_filename");
+        System.out.println(" Scheduler.jar client server_ip server_port [verbosity]");
+        System.out.println(" Scheduler.jar server [schedule_filename] [verbosity]");
         System.out.println();
     }
 
@@ -195,7 +197,7 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
         if (args.length == 0) {
             usage();
         } else if (args[0].equals("client")) {
-            if (args.length != 3) {
+            if (args.length < 3) {
                 usage();
             } else {
                 piClient = new PiClient();
@@ -210,16 +212,19 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
             }
 
         } else if (args[0].equals("server")) {
-            
+
+            for (int arg=2; arg<=args.length; arg++){
+               System.out.println("arg "+arg+" = "+args[arg-1]);
+            }
             if (args.length > 1) {
                 serverEngine.scheduleFileName = args[1];
-            } 
+            }
 
-                serverEngine = new ServerEngine();
-                serverEngine.restoreSchedule();
-                serverEngine.start(); // spawns a thread and returns
-                piServer = new PiServer();
-                piServer.runServer();
+            serverEngine = new ServerEngine();
+            serverEngine.restoreSchedule();
+            serverEngine.start(); // spawns a thread and returns
+            piServer = new PiServer();
+            piServer.runServer();
 
         }
     }
