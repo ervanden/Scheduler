@@ -56,7 +56,7 @@ public class ServerEngine {
          for (int min = 0; min < 60; min++) {
          TimeValue p = previousEvent(day, hour, min);
          TimeValue n = nextEvent(day, hour, min);
-         System.out.println(
+         Scheduler.serverMessage(1,
          p.dayName() + " " + p.hour() + ":" + p.minute()
          + " < " + day + " " + hour + ":" + min + "  < " +
          n.dayName() + " " + n.hour() + ":" + n.minute()
@@ -66,6 +66,8 @@ public class ServerEngine {
          }
          */
     }
+    
+
 
     static public boolean scheduleHasData() {
         return tableData[0][0] != null;
@@ -77,7 +79,7 @@ public class ServerEngine {
     }
 
     static public ArrayList<String> restart() {
-        System.out.println("serverEngine is asked to restart");
+        Scheduler.serverMessage(1,"serverEngine is asked to restart");
         serverEngineThread.restart();
         ArrayList<String> reply = new ArrayList<>();
         reply.add("ok");
@@ -89,7 +91,7 @@ public class ServerEngine {
     }
 
     static public ArrayList<String> newSchedule(ArrayList<String> timeValueList) {
-        System.out.println("Receiving schedule update");
+        Scheduler.serverMessage(1,"Receiving schedule update");
         int col = 0;
         int row = 0;
         for (String line : timeValueList) {
@@ -110,18 +112,17 @@ public class ServerEngine {
     static public ArrayList<String> getSchedule(ArrayList<String> day) {
         ArrayList<String> reply = new ArrayList<>();
 
-        System.out.println("Sending schedule for " + day.get(0));
+        Scheduler.serverMessage(1,"Sending schedule for " + day.get(0));
         int col = dayToColumn(day.get(0));
 
         // if tableData has no values (first start of pi) return an empty list
         if (tableData[0][col] == null) {
-            System.out.println("No data to send");
+            Scheduler.serverMessage(1,"No data to send");
             return reply;
         } else {
             for (int row = 0; row < rowCount; row++) {
                 reply.add(tableData[row][col].asString());
-//              System.out.println("getSchedule sending col=" + col + " row=" + row + " "+ tableData[row][col].asString());
-            }
+           }
         }
         return reply;
     }
@@ -132,7 +133,7 @@ public class ServerEngine {
         // Stores the schedule in a file to restore after pi boot
         // This procedure is called after every update of the schedule
         
-        System.out.println("Saving the schedule to " + scheduleFileName);
+        Scheduler.serverMessage(1,"Saving the schedule to " + scheduleFileName);
         try {
             File initialFile = new File(scheduleFileName);
             OutputStream is = new FileOutputStream(initialFile);
@@ -204,7 +205,7 @@ public class ServerEngine {
         if (!expired) {
             if (!tnow.isSameDateAs(tableData[0][dayToColumn(tnow.dayName())])) {
                 expired = true;
-                System.out.println("expire on date ");
+                Scheduler.serverMessage(1,"expire on date ");
             }
         }
     }
@@ -218,7 +219,7 @@ public class ServerEngine {
 
             if ((row == (rowCount - 1)) && (col == (columnCount - 1))) {
                 expired = true;
-                System.out.println("expire on end of schedule ");
+                Scheduler.serverMessage(1,"expire on end of schedule ");
             }
         }
     }

@@ -2,7 +2,6 @@ package scheduler;
 
 public class ServerEngineThread extends Thread {
 
-    private boolean debug = true;
     private boolean stop = false;
     private boolean fastforward = false;
 
@@ -20,7 +19,7 @@ public class ServerEngineThread extends Thread {
     }
 
     public void restart() {
-        System.out.println("serverEngineThread is asked to restart");
+        Scheduler.serverMessage(1, "serverEngineThread is asked to restart");
         stop = true;
         // startScheduling() will now terminate and will be called again in run()
     }
@@ -34,7 +33,7 @@ public class ServerEngineThread extends Thread {
 
             }
             if (stop) {
-                System.out.println("stoppableSleep is asked to stop");
+                Scheduler.serverMessage(1, "stoppableSleep is asked to stop");
                 return;
             }
         }
@@ -47,21 +46,22 @@ public class ServerEngineThread extends Thread {
         }
     }
 
-    private void printState(TimeValue tnow) {
-        System.out.print(
-                tnow.dayName()
+    private String printState(TimeValue tnow) {
+        String s
+                = tnow.dayName()
                 + " " + tnow.day() + "/" + tnow.month()
                 + " " + tnow.hour() + ":" + tnow.minute()
-                + "  SWITCH=");
+                + "  SWITCH=";
         if (ServerEngine.STATE) {
-            System.out.print("ON");
+            s = s + "ON";
         } else {
-            System.out.print("OFF");
+            s = s + "OFF";
         }
+        return s;
     }
 
     private void startScheduling() {
-        System.out.println("\nRestart scheduling\n");
+        Scheduler.serverMessage(1, "\nRestart scheduling\n");
 
         TimeValue tnow;
         TimeValue tprev;
@@ -70,7 +70,7 @@ public class ServerEngineThread extends Thread {
         boolean state, currentState, nextState;
 
         if (!ServerEngine.scheduleHasData()) {
-            System.out.println("Schedule has no data. Waiting...");
+            Scheduler.serverMessage(1, "Schedule has no data. Waiting...");
             stoppableSleep(60);
         } else {
             /* PSEUDO CODE,DO NOT REMOVE    
@@ -86,8 +86,7 @@ public class ServerEngineThread extends Thread {
 
             tnow = new TimeValue(); //compiler needs initialization
 
-            printState(tnow);
-            System.out.println("  <----------- ServerEngine STATE");
+            Scheduler.serverMessage(1, printState(tnow) + "  <----------- ServerEngine STATE");
 
             while (!stop) {
 
@@ -110,13 +109,8 @@ public class ServerEngineThread extends Thread {
 
                 tprev = ServerEngine.previousEvent(tnow.dayName(), tnow.hour(), tnow.minute());
                 tnext = ServerEngine.nextEvent(tnow.dayName(), tnow.hour(), tnow.minute());
-                if (debug) {
-                    TimeValue p = tprev;
-                    TimeValue n = tnext;
-                    System.out.println(
-                            p.dateName() + " < " + tnow.dateName() + "  < " + n.dateName()
-                    );
-                }
+
+                Scheduler.serverMessage(2, tprev.dateName() + " < " + tnow.dateName() + "  < " + tnext.dateName());
 
                 int secondsToNextEvent;
                 secondsToNextEvent = (tnext.hour() * 60 + tnext.minute()) - (tnow.hour() * 60 + tnow.minute());
@@ -126,15 +120,12 @@ public class ServerEngineThread extends Thread {
                     // we are in the last timeslot of the day, tnext is next day
                     secondsToNextEvent = 24 * 3600 - (tnow.hour() * 3600 + tnow.minute() * 60);
                 }
-                if (debug) {
-                    System.out.println("seconds to next event = " + secondsToNextEvent);
-                }
+
+                    Scheduler.serverMessage(2, "seconds to next event = " + secondsToNextEvent);
 
                 /* tprev is always on the same day as tnow */
                 currentState = getState(tprev);
-                if (debug) {
-                    System.out.println("current state according to schedule (tprev)  = " + currentState);
-                }
+                Scheduler.serverMessage(2, "current state according to schedule (tprev)  = " + currentState);
 
                 if (stop) {
                     return;
@@ -142,8 +133,7 @@ public class ServerEngineThread extends Thread {
                 state = ServerEngine.STATE;
                 setControl(currentState, tnow);
                 if (ServerEngine.STATE != state) {
-                    printState(tnow);
-                    System.out.println("  <-----------");
+                    Scheduler.serverMessage(1, printState(tnow) + "  <-----------");
                 }
 
                 if (stop) {
@@ -154,13 +144,8 @@ public class ServerEngineThread extends Thread {
                 // If tnow is in the last timeslot of the schedule, all future events expire
 
                 nextState = getState(tnext);
-                if (debug) {
-                    System.out.println("next state according to schedule (tnext) = " + nextState);
-                }
-
-                if (debug) {
-                    System.out.println("Sleeping " + secondsToNextEvent);
-                }
+                Scheduler.serverMessage(2, "next state according to schedule (tnext) = " + nextState);
+                Scheduler.serverMessage(2, "Sleeping " + secondsToNextEvent);
 
                 if (!fastforward) {
                     stoppableSleep(secondsToNextEvent);
@@ -174,23 +159,20 @@ public class ServerEngineThread extends Thread {
                 if (true) { // print state on every iteration
                     state = ServerEngine.STATE;
                     setControl(nextState, tnow);
-                    printState(tnow);
                     if (ServerEngine.STATE != state) {
-                        System.out.println("  <-----------");
+                        Scheduler.serverMessage(1, printState(tnow) + "  <-----------");
                     } else {
-                        System.out.println();
+                        Scheduler.serverMessage(1, printState(tnow));
                     }
                 } else { // print only if state switched
                     state = ServerEngine.STATE;
                     setControl(nextState, tnow);
                     if (ServerEngine.STATE != state) {
-                        printState(tnow);
-                        System.out.println("  <-----------");
+                        Scheduler.serverMessage(1, printState(tnow) + "  <-----------");
                     }
                 }
-                if (debug) {
-                    System.out.println("Sleeping " + 5 * 60);
-                }
+
+                Scheduler.serverMessage(2, "Sleeping " + 5 * 60);
 
                 if (!fastforward) {
                     stoppableSleep(5 * 60);
@@ -205,9 +187,6 @@ public class ServerEngineThread extends Thread {
     private boolean getState(TimeValue tschedule) {
         // get the state of the event in tschedule on the date of today.
         // it is assumed that tschedule and today are the same weekday.
-        if (debug) {
-            System.out.println("   getState schedule =  " + tschedule.timeValueName());
-        }
 
         if (ServerEngine.expired) {
             if (tschedule.once) {

@@ -77,16 +77,16 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
         if (action.equals("Send")) {
             // update Scheduler on server
 
-            clientMessage("Sending updated schedule to pi...");
+            clientMessage(1,"Sending updated schedule to pi...");
             tm.sendScheduleToServer();
 
             // restart Scheduler on server
-            clientMessage("Telling pi to restart scheduler...");
+            clientMessage(1,"Telling pi to restart scheduler...");
             ArrayList<String> msg = new ArrayList<>();
             ArrayList<String> reply;
             msg.add("restartScheduler");
             reply = PiClient.send(msg);
-            clientMessage(reply.get(0));
+            clientMessage(1,reply.get(0));
         }
     }
 
@@ -150,17 +150,25 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
         add(tableScrollPane);
         add(ioPane);
         add(msgScrollPane);
-        
+
         tm.getScheduleFromServer();
     }
-    
-   static     public void clientMessage(String msg) {
-        Document doc = msgPane.getDocument();
-        try {
-            doc.insertString(doc.getLength(), msg + "\n", null);
-        } catch (BadLocationException blex) {
+
+    static public void clientMessage(int verbosity, String msg) {
+        if (verbosity <= client_verbosity) {
+            Document doc = msgPane.getDocument();
+            try {
+                doc.insertString(doc.getLength(), msg + "\n", null);
+            } catch (BadLocationException blex) {
+            }
+            msgPane.setCaretPosition(doc.getLength());
         }
-        msgPane.setCaretPosition(doc.getLength());
+    }
+
+    static public void serverMessage(int verbosity, String msg) {
+        if (verbosity <= server_verbosity) {
+            System.out.println(msg);
+        }
     }
 
     class MyRenderer extends DefaultTableCellRenderer {
@@ -235,7 +243,7 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
 
             piClient = new PiClient();
 
-            PiClient.setServerAddress(server_host,server_port);
+            PiClient.setServerAddress(server_host, server_port);
 
             javax.swing.SwingUtilities.invokeLater(new Runnable() {
                 public void run() {

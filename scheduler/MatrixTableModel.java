@@ -39,7 +39,7 @@ public class MatrixTableModel extends DefaultTableModel {
             ArrayList<String> reply;
 
             String dayName = tableData[0][col].dayName();
-            Scheduler.clientMessage("Retrieving schedule from pi for " + dayName);
+            Scheduler.clientMessage(1,"Retrieving schedule from pi for " + dayName);
             msg.add("getSchedule");
             msg.add(dayName);
 
@@ -76,13 +76,13 @@ public class MatrixTableModel extends DefaultTableModel {
             }
         }
         reply = PiClient.send(msg);
-        Scheduler.clientMessage(reply.get(0));  // "ok"
+        Scheduler.clientMessage(1,reply.get(0));  // "ok"
 
-        Scheduler.clientMessage("Telling pi to save the schedule ... ");
+        Scheduler.clientMessage(1,"Telling pi to save the schedule ... ");
         msg = new ArrayList<>();
         msg.add("saveSchedule");
         reply = PiClient.send(msg);
-        Scheduler.clientMessage(reply.get(0));  // "ok"
+        Scheduler.clientMessage(1,reply.get(0));  // "ok"
 
     }
 
