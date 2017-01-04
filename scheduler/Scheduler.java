@@ -28,6 +28,7 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
     static PiServer piServer;
     static ServerEngine serverEngine;
     static int server_verbosity;
+    static boolean server_controlActive;
 
     static PiClient piClient;
     static String server_host;
@@ -77,16 +78,16 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
         if (action.equals("Send")) {
             // update Scheduler on server
 
-            clientMessage(1,"Sending updated schedule to pi...");
+            clientMessage(1, "Sending updated schedule to pi...");
             tm.sendScheduleToServer();
 
             // restart Scheduler on server
-            clientMessage(1,"Telling pi to restart scheduler...");
+            clientMessage(1, "Telling pi to restart scheduler...");
             ArrayList<String> msg = new ArrayList<>();
             ArrayList<String> reply;
             msg.add("restartScheduler");
             reply = PiClient.send(msg);
-            clientMessage(1,reply.get(0));
+            clientMessage(1, reply.get(0));
         }
     }
 
@@ -255,21 +256,27 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
 
             serverEngine.scheduleFileName = "/home/pi/Scheduler/Schedule.txt";
             server_verbosity = 0;
+            server_controlActive = true;
             for (int arg = 2; arg <= args.length; arg++) {
                 String[] s = args[arg - 1].split("=");
                 if (s[0].equals("file")) {
                     serverEngine.scheduleFileName = s[1];
                 } else if (s[0].equals("verbosity")) {
                     server_verbosity = Integer.parseInt(s[1]);
+                } else if (s[0].equals("control")) {
+                    server_controlActive = Boolean.parseBoolean(s[1]);
                 }
+
             }
 
             TimeValue now = new TimeValue();
             System.out.println("Scheduler starts at " + now.dateName());
             System.out.println("file=" + serverEngine.scheduleFileName);
             System.out.println("verbosity=" + server_verbosity);
+            System.out.println("controlActive=" + server_controlActive);
             System.out.println();
 
+            Pi4j.initialize();
             serverEngine = new ServerEngine();
             serverEngine.restoreSchedule();
             serverEngine.start(); // spawns a thread and returns

@@ -51,7 +51,7 @@ public class ServerEngineThread extends Thread {
                 = tnow.dayName()
                 + " " + tnow.day() + "/" + tnow.month()
                 + " " + tnow.hour() + ":" + tnow.minute()
-                + "  SWITCH=";
+                + "  STATE=";
         if (ServerEngine.STATE) {
             s = s + "ON";
         } else {
@@ -86,7 +86,7 @@ public class ServerEngineThread extends Thread {
 
             tnow = new TimeValue(); //compiler needs initialization
 
-            Scheduler.serverMessage(1, printState(tnow) + "  <----------- ServerEngine STATE");
+            Scheduler.serverMessage(1, printState(tnow) + "  <----------- Pin STATE");
 
             while (!stop) {
 
@@ -121,7 +121,7 @@ public class ServerEngineThread extends Thread {
                     secondsToNextEvent = 24 * 3600 - (tnow.hour() * 3600 + tnow.minute() * 60);
                 }
 
-                    Scheduler.serverMessage(2, "seconds to next event = " + secondsToNextEvent);
+                Scheduler.serverMessage(2, "seconds to next event = " + secondsToNextEvent);
 
                 /* tprev is always on the same day as tnow */
                 currentState = getState(tprev);
@@ -130,10 +130,16 @@ public class ServerEngineThread extends Thread {
                 if (stop) {
                     return;
                 }
-                state = ServerEngine.STATE;
-                setControl(currentState, tnow);
-                if (ServerEngine.STATE != state) {
+
+                if (ServerEngine.STATE != currentState) {
+                    if (currentState) {
+                        Pi4j.switchOn();
+                    } else {
+                        Pi4j.switchOff();
+                    }
                     Scheduler.serverMessage(1, printState(tnow) + "  <-----------");
+                } else {
+                    Scheduler.serverMessage(1, printState(tnow));
                 }
 
                 if (stop) {
@@ -156,20 +162,16 @@ public class ServerEngineThread extends Thread {
                 if (stop) {
                     return;
                 }
-                if (true) { // print state on every iteration
-                    state = ServerEngine.STATE;
-                    setControl(nextState, tnow);
-                    if (ServerEngine.STATE != state) {
-                        Scheduler.serverMessage(1, printState(tnow) + "  <-----------");
+
+                if (ServerEngine.STATE != currentState) {
+                    if (currentState) {
+                        Pi4j.switchOn();
                     } else {
-                        Scheduler.serverMessage(1, printState(tnow));
+                        Pi4j.switchOff();
                     }
-                } else { // print only if state switched
-                    state = ServerEngine.STATE;
-                    setControl(nextState, tnow);
-                    if (ServerEngine.STATE != state) {
-                        Scheduler.serverMessage(1, printState(tnow) + "  <-----------");
-                    }
+                    Scheduler.serverMessage(1, printState(tnow) + "  <-----------");
+                } else {
+                    Scheduler.serverMessage(1, printState(tnow));
                 }
 
                 Scheduler.serverMessage(2, "Sleeping " + 5 * 60);

@@ -47,24 +47,7 @@ public class ServerEngine {
 
     public ServerEngine() {
 
-        restoreSchedule();  // from scheduleFileName
-
-        /* test previousEvent and nextEvent
-        
-         for (String day : weekdays) {
-         for (int hour = 0; hour < 24; hour++) {
-         for (int min = 0; min < 60; min++) {
-         TimeValue p = previousEvent(day, hour, min);
-         TimeValue n = nextEvent(day, hour, min);
-         Scheduler.serverMessage(1,
-         p.dayName() + " " + p.hour() + ":" + p.minute()
-         + " < " + day + " " + hour + ":" + min + "  < " +
-         n.dayName() + " " + n.hour() + ":" + n.minute()
-         );
-         }
-         }
-         }
-         */
+        ServerEngine.STATE=Pi4j.readPin();
     }
     
 
