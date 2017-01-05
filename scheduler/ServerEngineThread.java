@@ -33,31 +33,27 @@ public class ServerEngineThread extends Thread {
 
             }
             if (stop) {
-                Scheduler.serverMessage(1, "stoppableSleep is asked to stop");
+                Scheduler.serverMessage(1, "sleep is interrupted");
                 return;
             }
         }
     }
 
     private void changeState(boolean newState, TimeValue tnow) {
-                if (ServerEngine.STATE != newState) {
-                    if (newState) {
-                        ServerEngine.STATE = Pi4j.switchOn();
-                    } else {
-                        ServerEngine.STATE = Pi4j.switchOff();
-                    }
-                    Scheduler.serverMessage(1, printState(tnow) + "  <-----------");
-                } else {
-                    Scheduler.serverMessage(1, printState(tnow));
-                }
+        if (ServerEngine.STATE != newState) {
+            if (newState) {
+                ServerEngine.STATE = Pi4j.switchOn();
+            } else {
+                ServerEngine.STATE = Pi4j.switchOff();
+            }
+            Scheduler.serverMessage(1, printState(tnow) + "  <-----------");
+        } else {
+            Scheduler.serverMessage(1, printState(tnow));
+        }
     }
 
     private String printState(TimeValue tnow) {
-        String s
-                = tnow.dayName()
-                + " " + tnow.day() + "/" + tnow.month()
-                + " " + tnow.hour() + ":" + tnow.minute()
-                + "  STATE=";
+        String s = tnow.dateName() + "  STATE=";
         if (ServerEngine.STATE) {
             s = s + "ON";
         } else {
@@ -126,7 +122,7 @@ public class ServerEngineThread extends Thread {
                     return;
                 }
 
-                changeState(currentState,tnow);
+                changeState(currentState, tnow);
 
                 ServerEngine.expireOnEndOfSchedule(tnow);
                 // getState will from now on only be called for future events.
@@ -152,7 +148,7 @@ public class ServerEngineThread extends Thread {
                     return;
                 }
 
-                changeState(nextState,tnow);
+                changeState(nextState, tnow);
 
                 Scheduler.serverMessage(2, "Sleeping " + 5 * 60);
 
