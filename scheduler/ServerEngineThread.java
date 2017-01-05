@@ -39,11 +39,17 @@ public class ServerEngineThread extends Thread {
         }
     }
 
-    private void setControl(boolean state, TimeValue tnow) {
-        if (ServerEngine.STATE != state) {
-            ServerEngine.STATE = state;
-
-        }
+    private void changeState(boolean newState, TimeValue tnow) {
+                if (ServerEngine.STATE != newState) {
+                    if (newState) {
+                        ServerEngine.STATE = Pi4j.switchOn();
+                    } else {
+                        ServerEngine.STATE = Pi4j.switchOff();
+                    }
+                    Scheduler.serverMessage(1, printState(tnow) + "  <-----------");
+                } else {
+                    Scheduler.serverMessage(1, printState(tnow));
+                }
     }
 
     private String printState(TimeValue tnow) {
@@ -112,17 +118,6 @@ public class ServerEngineThread extends Thread {
 
                 Scheduler.serverMessage(2, tprev.dateName() + " < " + tnow.dateName() + "  < " + tnext.dateName());
 
-                int secondsToNextEvent;
-                secondsToNextEvent = (tnext.hour() * 60 + tnext.minute()) - (tnow.hour() * 60 + tnow.minute());
-                secondsToNextEvent = secondsToNextEvent * 60;
-
-                if (secondsToNextEvent < 0) {
-                    // we are in the last timeslot of the day, tnext is next day
-                    secondsToNextEvent = 24 * 3600 - (tnow.hour() * 3600 + tnow.minute() * 60);
-                }
-
-                Scheduler.serverMessage(2, "seconds to next event = " + secondsToNextEvent);
-
                 /* tprev is always on the same day as tnow */
                 currentState = getState(tprev);
                 Scheduler.serverMessage(2, "current state according to schedule (tprev)  = " + currentState);
@@ -131,26 +126,20 @@ public class ServerEngineThread extends Thread {
                     return;
                 }
 
-                if (ServerEngine.STATE != currentState) {
-                    if (currentState) {
-                        Pi4j.switchOn();
-                    } else {
-                        Pi4j.switchOff();
-                    }
-                    Scheduler.serverMessage(1, printState(tnow) + "  <-----------");
-                } else {
-                    Scheduler.serverMessage(1, printState(tnow));
-                }
+                changeState(currentState,tnow);
 
-                if (stop) {
-                    return;
-                }
                 ServerEngine.expireOnEndOfSchedule(tnow);
                 // getState will from now on only be called for future events.
                 // If tnow is in the last timeslot of the schedule, all future events expire
 
                 nextState = getState(tnext);
                 Scheduler.serverMessage(2, "next state according to schedule (tnext) = " + nextState);
+                int secondsToNextEvent = tnext.isSecondsLaterThan(tnow);
+                if (secondsToNextEvent < 0) {
+                    // we are in the last timeslot of the day, tnext is next day
+                    secondsToNextEvent = 24 * 3600 - (tnow.hour() * 3600 + tnow.minute() * 60);
+                }
+                Scheduler.serverMessage(2, "seconds to next event = " + secondsToNextEvent);
                 Scheduler.serverMessage(2, "Sleeping " + secondsToNextEvent);
 
                 if (!fastforward) {
@@ -163,16 +152,7 @@ public class ServerEngineThread extends Thread {
                     return;
                 }
 
-                if (ServerEngine.STATE != currentState) {
-                    if (currentState) {
-                        Pi4j.switchOn();
-                    } else {
-                        Pi4j.switchOff();
-                    }
-                    Scheduler.serverMessage(1, printState(tnow) + "  <-----------");
-                } else {
-                    Scheduler.serverMessage(1, printState(tnow));
-                }
+                changeState(nextState,tnow);
 
                 Scheduler.serverMessage(2, "Sleeping " + 5 * 60);
 

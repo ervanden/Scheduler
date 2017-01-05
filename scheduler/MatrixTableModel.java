@@ -22,6 +22,7 @@ public class MatrixTableModel extends DefaultTableModel {
                     TimeValue slot = new TimeValue(day);
                     slot.set(Calendar.HOUR_OF_DAY, hr);
                     slot.set(Calendar.MINUTE, min);
+                    slot.set(Calendar.SECOND, 0);
                     slot.on = false;
                     slot.once = false;
                     tableData[row][col] = slot;

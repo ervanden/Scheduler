@@ -16,7 +16,8 @@ public class TimeValue extends GregorianCalendar {
                 now.getMonth().getValue() - 1, // Calendar works with months 0-11
                 now.getDayOfMonth(),
                 now.getHour(),
-                now.getMinute());
+                now.getMinute(),
+                now.getSecond());
         on = null;
     }
 
@@ -27,7 +28,8 @@ public class TimeValue extends GregorianCalendar {
                 t.get(Calendar.MONTH),
                 t.get(Calendar.DAY_OF_MONTH),
                 t.get(Calendar.HOUR_OF_DAY),
-                t.get(Calendar.MINUTE)
+                t.get(Calendar.MINUTE),
+                t.get(Calendar.SECOND)
         );
 
     }
@@ -61,10 +63,14 @@ public class TimeValue extends GregorianCalendar {
         return get(Calendar.MINUTE);
     }
 
+    public Integer second() {
+        return get(Calendar.SECOND);
+    }
+
     public String dateName() {
         return this.dayName() + " "
                 + this.day() + "/" + this.month() + "/" + this.year() + " "
-                + this.hour() + ":" + this.minute();
+                + this.hour() + ":" + this.minute() + ":" + this.second();
     }
 
     public String timeValueName() {
@@ -75,6 +81,11 @@ public class TimeValue extends GregorianCalendar {
         return (this.year().intValue() == t.year().intValue())
                 && (this.month().intValue() == t.month().intValue())
                 && (this.day().intValue() == t.day().intValue());
+    }
+
+    public int isSecondsLaterThan(TimeValue t) {
+        return (hour() * 3600 + minute() * 60 + second())
+                - (t.hour() * 3600 + t.minute() * 60 + t.second());
     }
 
     public String asString() {
@@ -99,12 +110,14 @@ public class TimeValue extends GregorianCalendar {
         String minute = tokens[5];
         String cyclic = tokens[6];
         String once = tokens[7];
+        int second = 0;
         TimeValue t = new TimeValue();
         t.set(Integer.parseInt(year),
                 Integer.parseInt(month) - 1,
                 Integer.parseInt(day),
                 Integer.parseInt(hour),
-                Integer.parseInt(minute));
+                Integer.parseInt(minute),
+                second);
         t.on = Boolean.parseBoolean(cyclic);
         t.once = Boolean.parseBoolean(once);
         return t;
