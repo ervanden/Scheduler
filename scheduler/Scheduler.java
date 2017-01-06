@@ -29,6 +29,7 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
     static ServerEngine serverEngine;
     static int server_verbosity;
     static boolean server_controlActive;
+    static int server_pin=6;
 
     static PiClient piClient;
     static String server_host;

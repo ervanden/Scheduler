@@ -4,21 +4,84 @@ import com.pi4j.io.gpio.*;
 
 public class Pi4j {
 
-    static GpioPinDigitalOutput pin;
     static GpioController gpio;
 
-    static public boolean switchOn() {
-        Scheduler.serverMessage(2, "Pi4J Pin On");
+    static GpioPinDigitalOutput[] initializedOutputPins = new GpioPinDigitalOutput[20];
+
+    {
+        for (int i = 0; i < 20; i++) {
+            initializedOutputPins[i] = null;
+        }
+    }
+
+    static public Pin intToPin(int i) {
+        Pin pin = null;
+        switch (i) {
+            case 0:
+                return RaspiPin.GPIO_00;
+            case 1:
+                return RaspiPin.GPIO_01;
+            case 2:
+                return RaspiPin.GPIO_02;
+            case 3:
+                return RaspiPin.GPIO_03;
+            case 4:
+                return RaspiPin.GPIO_04;
+            case 5:
+                return RaspiPin.GPIO_05;
+            case 6:
+                return RaspiPin.GPIO_06;
+            case 7:
+                return RaspiPin.GPIO_07;
+            case 8:
+                return RaspiPin.GPIO_08;
+            case 9:
+                return RaspiPin.GPIO_09;
+            case 10:
+                return RaspiPin.GPIO_10;
+            case 11:
+                return RaspiPin.GPIO_11;
+            case 12:
+                return RaspiPin.GPIO_12;
+            case 13:
+                return RaspiPin.GPIO_13;
+            case 14:
+                return RaspiPin.GPIO_14;
+            case 15:
+                return RaspiPin.GPIO_15;
+            case 16:
+                return RaspiPin.GPIO_16;
+            case 17:
+                return RaspiPin.GPIO_17;
+            case 18:
+                return RaspiPin.GPIO_18;
+            case 19:
+                return RaspiPin.GPIO_19;
+            case 20:
+                return RaspiPin.GPIO_20;
+            default:
+                Scheduler.serverMessage(0, "non existing raspi pin " + i);
+
+        }
+        return pin;
+    }
+
+    static public boolean switchOn(int n) {
+        Scheduler.serverMessage(2, "switchOn(" + n + ")");
+        GpioPinDigitalOutput pin = initializedOutputPins[n];
         if (Scheduler.server_controlActive) {
+            Scheduler.serverMessage(2, "Pi4J Pin " + n + " On");
             pin.high();
         }
         return true;
     }
 
-    static public boolean switchOff() {
-        Scheduler.serverMessage(2, "Pi4J Pin Off");
+    static public boolean switchOff(int n) {
+        Scheduler.serverMessage(2, "switchOff(" + n + ")");
+        GpioPinDigitalOutput pin = initializedOutputPins[n];
         if (Scheduler.server_controlActive) {
-            pin.high();
+            Scheduler.serverMessage(2, "Pi4J Pin " + n + " Off");
+            pin.low();
         }
         return false;
     }
@@ -27,10 +90,17 @@ public class Pi4j {
         return false;
     }
 
+    static public boolean initPin(int n) {
+        if (Scheduler.server_controlActive) {
+            initializedOutputPins[n]
+                    = gpio.provisionDigitalOutputPin(intToPin(n), "LED", PinState.LOW);
+        }
+        return true;
+    }
+
     public static void initialize() {
         if (Scheduler.server_controlActive) {
             gpio = GpioFactory.getInstance();
-            pin = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_06, "LED", PinState.LOW);
         }
     }
 }
