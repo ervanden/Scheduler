@@ -60,27 +60,27 @@ public class Pi4j {
             case 20:
                 return RaspiPin.GPIO_20;
             default:
-                Scheduler.serverMessage(0, "non existing raspi pin " + i);
+                SchedulerPanel.serverMessage(0, "non existing raspi pin " + i);
 
         }
         return pin;
     }
 
     static public boolean switchOn(int n) {
-        Scheduler.serverMessage(2, "switchOn(" + n + ")");
+        SchedulerPanel.serverMessage(2, "switchOn(" + n + ")");
         GpioPinDigitalOutput pin = initializedOutputPins[n];
         if (Scheduler.server_controlActive) {
-            Scheduler.serverMessage(2, "Pi4J Pin " + n + " On");
+            SchedulerPanel.serverMessage(2, "Pi4J Pin " + n + " On");
             pin.high();
         }
         return true;
     }
 
     static public boolean switchOff(int n) {
-        Scheduler.serverMessage(2, "switchOff(" + n + ")");
+        SchedulerPanel.serverMessage(2, "switchOff(" + n + ")");
         GpioPinDigitalOutput pin = initializedOutputPins[n];
         if (Scheduler.server_controlActive) {
-            Scheduler.serverMessage(2, "Pi4J Pin " + n + " Off");
+            SchedulerPanel.serverMessage(2, "Pi4J Pin " + n + " Off");
             pin.low();
         }
         return false;

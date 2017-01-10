@@ -32,6 +32,15 @@ public class MatrixTableModel extends DefaultTableModel {
         }
     }
 
+    public void phpPrintSchedule() {
+        for (int col = 0; col < columnCount; col++) {
+                            System.out.println(tableData[0][col].dayName());
+            for (int row = 0; row < rowCount; row++) {
+                System.out.println(tableData[row][col].asString());
+            }
+        }
+    }
+
     public void getScheduleFromServer() {
         // If the reply is an empty list , this means that pi has no schedule yet
         for (int col = 0; col < columnCount; col++) {
@@ -40,7 +49,7 @@ public class MatrixTableModel extends DefaultTableModel {
             ArrayList<String> reply;
 
             String dayName = tableData[0][col].dayName();
-            Scheduler.clientMessage(1,"Retrieving schedule from pi for " + dayName);
+            SchedulerPanel.clientMessage(1, "Retrieving schedule from pi for " + dayName);
             msg.add("getSchedule");
             msg.add(dayName);
 
@@ -77,13 +86,13 @@ public class MatrixTableModel extends DefaultTableModel {
             }
         }
         reply = PiClient.send(msg);
-        Scheduler.clientMessage(1,reply.get(0));  // "ok"
+        SchedulerPanel.clientMessage(1, reply.get(0));  // "ok"
 
-        Scheduler.clientMessage(1,"Telling pi to save the schedule ... ");
+        SchedulerPanel.clientMessage(1, "Telling pi to save the schedule ... ");
         msg = new ArrayList<>();
         msg.add("saveSchedule");
         reply = PiClient.send(msg);
-        Scheduler.clientMessage(1,reply.get(0));  // "ok"
+        SchedulerPanel.clientMessage(1, reply.get(0));  // "ok"
 
     }
 
