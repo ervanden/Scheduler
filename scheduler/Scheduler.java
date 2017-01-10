@@ -259,6 +259,8 @@ public class Scheduler extends JPanel implements ActionListener, ListSelectionLi
                 });
             } else if (client_command.equals("iets")) {
                 System.out.println(client_command);
+            } else {
+                System.out.println("unknown client command: "+client_command);
             }
 
         } else if (args[0].equals("server")) {
