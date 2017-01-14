@@ -1,8 +1,16 @@
 package scheduler;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Calendar;
 import javax.swing.table.DefaultTableModel;
+import static scheduler.SchedulerPanel.clientMessage;
+import static scheduler.ServerEngine.scheduleFileName;
 
 public class MatrixTableModel extends DefaultTableModel {
 
@@ -34,7 +42,7 @@ public class MatrixTableModel extends DefaultTableModel {
 
     public void phpPrintSchedule() {
         for (int col = 0; col < columnCount; col++) {
-                            System.out.println(tableData[0][col].dayName());
+            System.out.println(tableData[0][col].dayName());
             for (int row = 0; row < rowCount; row++) {
                 System.out.println(tableData[row][col].asString());
             }
@@ -74,10 +82,52 @@ public class MatrixTableModel extends DefaultTableModel {
         }
     }
 
+    public void readScheduleFromFile() {
+        scheduleFileName = "/var/tmp/SchedulerCommit.txt";
+        BufferedReader inputStream;
+
+        try {
+            System.out.println("Opening " + scheduleFileName);
+            File initialFile = new File(scheduleFileName);
+            InputStream is = new FileInputStream(initialFile);
+            InputStreamReader isr = new InputStreamReader(is, "UTF-8");
+            inputStream = new BufferedReader(isr);
+
+            int lineCount = 0;
+            for (int col = 0; col < columnCount; col++) {
+                for (int row = 0; row < rowCount; row++) {
+                    String inputLine = inputStream.readLine();
+                    lineCount++;
+                    String[] inputWords = inputLine.split(":");
+                    String color = inputWords[3];
+
+                    TimeValue tv = tableData[row][col];
+                    if ((tv.dayName().equals(inputWords[0]))
+                            && (tv.hour().toString().equals(inputWords[1]))
+                            && (tv.hour().toString().equals(inputWords[1]))) {
+                        tv.on= (color.equals("red") || color.equals("darkred"));
+                        tv.once = (color.equals("darkred") || color.equals("darkblue"));
+                    } else {
+                        System.out.println("Mismatch in " + scheduleFileName);
+                        System.out.println("  " + inputLine);
+                        System.out.println("  " + tv.asString());
+                        return;
+                    }
+
+                }
+            }
+            System.out.println("readScheduleFromFile() read " + lineCount + " lines");
+            inputStream.close();
+        } catch (IOException io) {
+            System.out.println("io exception while reading from " + scheduleFileName);
+        }
+    }
+
     public void sendScheduleToServer() {
         ArrayList<String> msg;
         ArrayList<String> reply;
 
+        clientMessage(1, "Sending updated schedule to pi...");
         msg = new ArrayList<>();
         msg.add("newSchedule");
         for (int col = 0; col < columnCount; col++) {
@@ -94,6 +144,11 @@ public class MatrixTableModel extends DefaultTableModel {
         reply = PiClient.send(msg);
         SchedulerPanel.clientMessage(1, reply.get(0));  // "ok"
 
+        SchedulerPanel.clientMessage(1, "Telling pi to restart scheduler...");
+        msg = new ArrayList<>();
+        msg.add("restartScheduler");
+        reply = PiClient.send(msg);
+        clientMessage(1, reply.get(0));
     }
 
     public int getColumnCount() {

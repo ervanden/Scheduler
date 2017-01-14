@@ -39,21 +39,25 @@ public class ServerEngineThread extends Thread {
         }
     }
 
-    private void changeState(boolean newState, TimeValue tnow) {
+    private void changeState(boolean newState, TimeValue tnow, boolean showMessage) {
         if (ServerEngine.STATE != newState) {
             if (newState) {
                 ServerEngine.STATE = Pi4j.switchOn(Scheduler.server_pin);
             } else {
                 ServerEngine.STATE = Pi4j.switchOff(Scheduler.server_pin);
             }
-            SchedulerPanel.serverMessage(1, printState(tnow) + "  <-----------");
+            if (showMessage) {
+                SchedulerPanel.serverMessage(1, printState(tnow) + "  <-----------");
+            }
         } else {
-            SchedulerPanel.serverMessage(1, printState(tnow));
+            if (showMessage) {
+                SchedulerPanel.serverMessage(1, printState(tnow));
+            }
         }
     }
 
     private String printState(TimeValue tnow) {
-        String s = tnow.dateName() + "  STATE=";
+        String s = "STATE=";
         if (ServerEngine.STATE) {
             s = s + "ON";
         } else {
@@ -63,13 +67,14 @@ public class ServerEngineThread extends Thread {
     }
 
     private void startScheduling() {
-        SchedulerPanel.serverMessage(1, "\nRestart scheduling\n");
+        SchedulerPanel.serverMessage(1, "Restart scheduling");
 
         TimeValue tnow;
         TimeValue tprev;
         TimeValue tnext;
 
-        boolean state, currentState, nextState;
+        boolean currentState, nextState;
+        boolean firstIteration = true;
 
         if (!ServerEngine.scheduleHasData()) {
             SchedulerPanel.serverMessage(1, "Schedule has no data. Waiting...");
@@ -122,7 +127,7 @@ public class ServerEngineThread extends Thread {
                     return;
                 }
 
-                changeState(currentState, tnow);
+                changeState(currentState, tnow, firstIteration);
 
                 ServerEngine.expireOnEndOfSchedule(tnow);
                 // getState will from now on only be called for future events.
@@ -148,7 +153,7 @@ public class ServerEngineThread extends Thread {
                     return;
                 }
 
-                changeState(nextState, tnow);
+                changeState(nextState, tnow, true);
 
                 SchedulerPanel.serverMessage(2, "Sleeping " + 5 * 60);
 
@@ -156,6 +161,7 @@ public class ServerEngineThread extends Thread {
                     stoppableSleep(5 * 60);
                 }
                 tnow.add(TimeValue.SECOND, 5 * 60);
+                firstIteration=false;
 
             }
         }

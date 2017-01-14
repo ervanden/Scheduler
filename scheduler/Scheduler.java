@@ -78,9 +78,15 @@ public class Scheduler {
                         tm.getScheduleFromServer();
                     }
                 });
-            } else if (client_command.equals("phpPrintSchedule")) {
+            } else if (client_command.equals("SchedulerTable")) {
                 tm.getScheduleFromServer();
                 tm.phpPrintSchedule();
+            } else if (client_command.equals("SchedulerCommit")) {
+                System.out.println("java client received command");
+ //               tm.getScheduleFromServer();// niet nodig ???????
+                tm.readScheduleFromFile();
+                tm.sendScheduleToServer();
+
             } else {
                 System.out.println("unknown client command: " + client_command);
             }

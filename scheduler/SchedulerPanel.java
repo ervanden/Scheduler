@@ -67,18 +67,7 @@ public class SchedulerPanel extends JPanel implements ActionListener, ListSelect
             onceMode = false;
         }
         if (action.equals("Send")) {
-            // update Scheduler on server
-
-            clientMessage(1, "Sending updated schedule to pi...");
             tm.sendScheduleToServer();
-
-            // restart Scheduler on server
-            clientMessage(1, "Telling pi to restart scheduler...");
-            ArrayList<String> msg = new ArrayList<>();
-            ArrayList<String> reply;
-            msg.add("restartScheduler");
-            reply = PiClient.send(msg);
-            clientMessage(1, reply.get(0));
         }
     }
 
@@ -157,7 +146,8 @@ public class SchedulerPanel extends JPanel implements ActionListener, ListSelect
 
     static public void serverMessage(int verbosity, String msg) {
         if (verbosity <= Scheduler.server_verbosity) {
-            System.out.println(msg);
+            TimeValue tnow= new TimeValue();
+            System.out.println(tnow.dateName() + "  "+msg);
         }
     }
 

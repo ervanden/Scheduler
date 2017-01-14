@@ -46,13 +46,13 @@ public class ServerEngine {
     }
 
     public ServerEngine() {
-        
+
         Pi4j.initPin(Scheduler.server_pin);
-        
-          ServerEngine.STATE=Pi4j.readPin();// dummy for now
-          
+
+        ServerEngine.STATE = Pi4j.readPin();// dummy for now
+
         /*
-        for (int i =1; i<10; i++){
+         for (int i =1; i<10; i++){
          Pi4j.switchOn();
          try{ Thread.sleep(1000);} catch (Exception e){};
          Pi4j.switchOff();
@@ -104,7 +104,6 @@ public class ServerEngine {
     static public ArrayList<String> getSchedule(ArrayList<String> day) {
         ArrayList<String> reply = new ArrayList<>();
 
-//        SchedulerPanel.serverMessage(1, "Sending schedule for " + day.get(0));
         int col = dayToColumn(day.get(0));
 
         // if tableData has no values (first start of pi) return an empty list
@@ -144,16 +143,20 @@ public class ServerEngine {
             reply.add("ok");
 
         } catch (IOException io) {
-            System.err.println("io exception while writing to " + scheduleFileName);
+            SchedulerPanel.serverMessage(1, "io exception while writing to " + scheduleFileName);
             reply.add("io exception while writing to " + scheduleFileName);
         }
         return reply;
     }
 
     static public void restoreSchedule() {  // called when ServerEngine starts
+        // we read the schedule file and put the entries in an  arraylist 
+        // so that the schedule is in the same format as when
+        // it was updated from the client.
         ArrayList<String> msg;
         BufferedReader inputStream = null;
 
+        SchedulerPanel.serverMessage(1, "Restoring the schedule from " + scheduleFileName);
         try {
             File initialFile = new File(scheduleFileName);
             InputStream is = new FileInputStream(initialFile);

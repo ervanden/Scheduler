@@ -59,19 +59,18 @@ class ServerThread extends Thread {
 
 public class PiServer {
 
-    public void runServer() { 
+    public void runServer() {
 
-        System.out.println("Starting piServer...");
         int portNumber = 6789;
         boolean listening = true;
 
         try (ServerSocket serverSocket = new ServerSocket(portNumber)) {
-            System.out.println("Listening...");
+            SchedulerPanel.serverMessage(1, "Listening on port " + portNumber);
             while (listening) {
                 new ServerThread(serverSocket.accept()).start();
             }
         } catch (IOException e) {
-            System.err.println("Could not listen on port " + portNumber);
+            SchedulerPanel.serverMessage(1,"Could not listen on port " + portNumber);
             System.exit(-1);
         }
     }
