@@ -101,6 +101,16 @@ public class ServerEngine {
         return reply;
     }
 
+    static public ArrayList<String> getStatus() {
+        ArrayList<String> reply = new ArrayList<>();
+        if (STATE) {
+            reply.add("ON");
+        } else {
+            reply.add("OFF");
+        }
+        return reply;
+    }
+
     static public ArrayList<String> getSchedule(ArrayList<String> day) {
         ArrayList<String> reply = new ArrayList<>();
 

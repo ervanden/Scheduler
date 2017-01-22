@@ -82,6 +82,15 @@ public class MatrixTableModel extends DefaultTableModel {
         }
     }
 
+    public String getStatusFromServer() {
+        ArrayList<String> msg = new ArrayList<>();
+        ArrayList<String> reply;
+        msg.add("getStatus");
+        reply = PiClient.send(msg);
+        return reply.get(0);
+
+    }
+
     public void readScheduleFromFile() {
         scheduleFileName = "/var/tmp/SchedulerCommit.txt";
         BufferedReader inputStream;
@@ -105,7 +114,7 @@ public class MatrixTableModel extends DefaultTableModel {
                     if ((tv.dayName().equals(inputWords[0]))
                             && (tv.hour().toString().equals(inputWords[1]))
                             && (tv.hour().toString().equals(inputWords[1]))) {
-                        tv.on= (color.equals("red") || color.equals("darkred"));
+                        tv.on = (color.equals("red") || color.equals("darkred"));
                         tv.once = (color.equals("darkred") || color.equals("darkblue"));
                     } else {
                         System.out.println("Mismatch in " + scheduleFileName);

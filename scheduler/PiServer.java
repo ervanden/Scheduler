@@ -37,6 +37,8 @@ class ServerThread extends Thread {
                 reply = Scheduler.serverEngine.newSchedule(text);
             } else if (command.equals("getSchedule")) {
                 reply = Scheduler.serverEngine.getSchedule(text);
+            } else if (command.equals("getStatus")) {
+                reply = Scheduler.serverEngine.getStatus();
             } else if (command.equals("saveSchedule")) {
                 reply = Scheduler.serverEngine.saveSchedule();
             } else if (command.equals("restartScheduler")) {
@@ -70,7 +72,7 @@ public class PiServer {
                 new ServerThread(serverSocket.accept()).start();
             }
         } catch (IOException e) {
-            SchedulerPanel.serverMessage(1,"Could not listen on port " + portNumber);
+            SchedulerPanel.serverMessage(1, "Could not listen on port " + portNumber);
             System.exit(-1);
         }
     }

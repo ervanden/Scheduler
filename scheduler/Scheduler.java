@@ -78,12 +78,15 @@ public class Scheduler {
                         tm.getScheduleFromServer();
                     }
                 });
+            } else if (client_command.equals("SchedulerStatus")) {
+                String reply = tm.getStatusFromServer();
+                System.out.println(reply);
             } else if (client_command.equals("SchedulerTable")) {
                 tm.getScheduleFromServer();
                 tm.phpPrintSchedule();
             } else if (client_command.equals("SchedulerCommit")) {
                 System.out.println("java client received command");
- //               tm.getScheduleFromServer();// niet nodig ???????
+                //               tm.getScheduleFromServer();// niet nodig ???????
                 tm.readScheduleFromFile();
                 tm.sendScheduleToServer();
 
