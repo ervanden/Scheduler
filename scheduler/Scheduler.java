@@ -8,11 +8,12 @@ public class Scheduler {
     static ServerEngine serverEngine;
     static int server_verbosity;
     static boolean server_controlActive;
+    static int server_port;
     static int server_pin = 6;
 
     static PiClient piClient;
-    static String server_host;
-    static int server_port;
+    static String client_target_host;
+    static int client_target_port;
     static String client_command;
     static int client_verbosity;
 
@@ -40,17 +41,17 @@ public class Scheduler {
         if (args.length == 0) {
             usage();
         } else if (args[0].equals("client")) {
-            server_host = "localhost";
-            server_port = 6789;
+            client_target_host = "localhost";
+            client_target_port = 6789;
             client_command = "gui";
             client_verbosity = 0;
 
             for (int arg = 2; arg <= args.length; arg++) {
                 String[] s = args[arg - 1].split("=");
                 if (s[0].equals("server")) {
-                    server_host = s[1];
+                    client_target_host = s[1];
                 } else if (s[0].equals("port")) {
-                    server_port = Integer.parseInt(s[1]);
+                    client_target_port = Integer.parseInt(s[1]);
                 } else if (s[0].equals("verbosity")) {
                     client_verbosity = Integer.parseInt(s[1]);
                 } else if (s[0].equals("command")) {
@@ -63,13 +64,13 @@ public class Scheduler {
             // messages go to the GUI which is not started yet
 
             piClient = new PiClient();
-            PiClient.setServerAddress(server_host, server_port);
+            PiClient.setServerAddress(client_target_host, client_target_port);
 
             if (client_command.equals("gui")) {
                 TimeValue now = new TimeValue();
                 System.out.println("Client starts at " + now.dateName());
-                System.out.println("server=" + server_host);
-                System.out.println("port=" + server_port);
+                System.out.println("server=" + client_target_host);
+                System.out.println("port=" + client_target_port);
                 System.out.println("verbosity=" + client_verbosity);
                 System.out.println();
                 javax.swing.SwingUtilities.invokeLater(new Runnable() {
@@ -103,6 +104,8 @@ public class Scheduler {
                 String[] s = args[arg - 1].split("=");
                 if (s[0].equals("file")) {
                     serverEngine.scheduleFileName = s[1];
+                } else if (s[0].equals("port")) {
+                    server_port = Integer.parseInt(s[1]);
                 } else if (s[0].equals("verbosity")) {
                     server_verbosity = Integer.parseInt(s[1]);
                 } else if (s[0].equals("control")) {

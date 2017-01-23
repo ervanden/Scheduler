@@ -63,7 +63,7 @@ public class PiServer {
 
     public void runServer() {
 
-        int portNumber = 6789;
+        int portNumber = Scheduler.server_port;
         boolean listening = true;
 
         try (ServerSocket serverSocket = new ServerSocket(portNumber)) {
@@ -72,7 +72,7 @@ public class PiServer {
                 new ServerThread(serverSocket.accept()).start();
             }
         } catch (IOException e) {
-            SchedulerPanel.serverMessage(1, "Could not listen on port " + portNumber);
+            SchedulerPanel.serverMessage(1, "Could not listen on port " + portNumber+". Exiting...");
             System.exit(-1);
         }
     }
