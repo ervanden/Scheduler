@@ -99,6 +99,7 @@ public class Scheduler {
 
             serverEngine.scheduleFileName = "/home/pi/Scheduler/Schedule.txt";
             server_verbosity = 0;
+            server_port=6789;
             server_controlActive = true;
             for (int arg = 2; arg <= args.length; arg++) {
                 String[] s = args[arg - 1].split("=");
