@@ -8,7 +8,6 @@ import javax.swing.JTable;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -61,7 +60,6 @@ public class SchedulerPanel extends JPanel implements ActionListener, ListSelect
     void executeAction(String action) {
         if (action.equals("Set once")) {
             onceMode = true;
-            Scheduler.serverEngine.restart();
         }
         if (action.equals("Set always")) {
             onceMode = false;
@@ -144,10 +142,12 @@ public class SchedulerPanel extends JPanel implements ActionListener, ListSelect
         }
     }
 
-    static public void serverMessage(int verbosity, String msg) {
+    static public void serverMessage(
+           int serverIdentifier, 
+            int verbosity, String msg) {
         if (verbosity <= Scheduler.server_verbosity) {
             TimeValue tnow= new TimeValue();
-            System.out.println(tnow.dateName() + "  "+msg);
+            System.out.println(tnow.dateName() + "  ["+serverIdentifier + "] "+msg);
         }
     }
 

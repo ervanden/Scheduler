@@ -14,20 +14,20 @@ import java.util.ArrayList;
 
 public class ServerEngine {
 
-    // control GPIO based on the schedule
-    static public boolean STATE = false;
-    static public boolean expired = false;
+    public int portNumber;
+    public boolean STATE = false;
+    public boolean expired = false;
 
     // expired=true  means that the current time is after the dates in the schedule
     // and the one time events are no longer to be executed.
-    static int columnCount = 7;
-    static int rowCount = 24 * 4;
-    static TimeValue[][] tableData = new TimeValue[rowCount][columnCount];
+    int columnCount = 7;
+    int rowCount = 24 * 4;
+    TimeValue[][] tableData = new TimeValue[rowCount][columnCount];
 
-    static String scheduleFileName = "/home/pi/Scheduler/Schedule.txt";
+    String scheduleFileName;
 
-    static ArrayList<String> weekdays = new ArrayList<>();
-    static ServerEngineThread serverEngineThread = new ServerEngineThread();
+    ArrayList<String> weekdays = new ArrayList<>();
+    ServerEngineThread serverEngineThread = new ServerEngineThread(this);
 
     {
         weekdays.add("MONDAY");  // will all be overwritten when schedule is restored
@@ -45,45 +45,48 @@ public class ServerEngine {
         }
     }
 
-    public ServerEngine() {
+    public ServerEngine(int portNumber) {
+        this.portNumber = portNumber;
 
+        scheduleFileName = "/home/pi/Scheduler/Schedule"+portNumber+".txt";
+        if (!Scheduler.server_controlActive) {
+            scheduleFileName = "C:\\Users\\erikv\\Documents\\Schedule"+portNumber+".txt";
+        }
         Pi4j.initPin(Scheduler.server_pin);
 
-        ServerEngine.STATE = Pi4j.readPin();// dummy for now
+        this.STATE = Pi4j.readPin();// dummy for now
+        restoreSchedule();
 
-        /*
-         for (int i =1; i<10; i++){
-         Pi4j.switchOn();
-         try{ Thread.sleep(1000);} catch (Exception e){};
-         Pi4j.switchOff();
-         try{ Thread.sleep(1000);} catch (Exception e){};
-         }
-         */
+    }
+    
+    private void msg(int verbosity, String message){
+                SchedulerPanel.serverMessage(portNumber,verbosity,message);
     }
 
-    static public boolean scheduleHasData() {
+    public boolean scheduleHasData() {
         return tableData[0][0] != null;
 
     }
 
-    static public void start() {
+    public void start() {
+        new PiServer(this).start();
         serverEngineThread.start();
     }
 
-    static public ArrayList<String> restart() {
-        SchedulerPanel.serverMessage(1, "serverEngine is asked to restart");
+    public ArrayList<String> restart() {
+        msg(1, "serverEngine is asked to restart");
         serverEngineThread.restart();
         ArrayList<String> reply = new ArrayList<>();
         reply.add("ok");
         return reply;
     }
 
-    static public int dayToColumn(String day) {
+    public int dayToColumn(String day) {
         return weekdays.indexOf(day);
     }
 
-    static public ArrayList<String> newSchedule(ArrayList<String> timeValueList) {
-        SchedulerPanel.serverMessage(1, "Receiving schedule update");
+    public ArrayList<String> newSchedule(ArrayList<String> timeValueList) {
+        msg(1, "Receiving schedule update");
         int col = 0;
         int row = 0;
         for (String line : timeValueList) {
@@ -101,7 +104,7 @@ public class ServerEngine {
         return reply;
     }
 
-    static public ArrayList<String> getStatus() {
+    public ArrayList<String> getStatus() {
         ArrayList<String> reply = new ArrayList<>();
         if (STATE) {
             reply.add("ON");
@@ -111,14 +114,14 @@ public class ServerEngine {
         return reply;
     }
 
-    static public ArrayList<String> getSchedule(ArrayList<String> day) {
+    public ArrayList<String> getSchedule(ArrayList<String> day) {
         ArrayList<String> reply = new ArrayList<>();
 
         int col = dayToColumn(day.get(0));
 
         // if tableData has no values (first start of pi) return an empty list
         if (tableData[0][col] == null) {
-            SchedulerPanel.serverMessage(1, "No data to send");
+            msg(1, "No data to send");
             return reply;
         } else {
             for (int row = 0; row < rowCount; row++) {
@@ -128,12 +131,12 @@ public class ServerEngine {
         return reply;
     }
 
-    static public ArrayList<String> saveSchedule() {
+    public ArrayList<String> saveSchedule() {
         ArrayList<String> reply = new ArrayList<>();
 
         // Stores the schedule in a file to restore after pi boot
         // This procedure is called after every update of the schedule
-        SchedulerPanel.serverMessage(1, "Saving the schedule to " + scheduleFileName);
+        msg(1, "Saving the schedule to " + scheduleFileName);
         try {
             File initialFile = new File(scheduleFileName);
             OutputStream is = new FileOutputStream(initialFile);
@@ -153,20 +156,20 @@ public class ServerEngine {
             reply.add("ok");
 
         } catch (IOException io) {
-            SchedulerPanel.serverMessage(1, "io exception while writing to " + scheduleFileName);
+            msg(1, "io exception while writing to " + scheduleFileName);
             reply.add("io exception while writing to " + scheduleFileName);
         }
         return reply;
     }
 
-    static public void restoreSchedule() {  // called when ServerEngine starts
+    public void restoreSchedule() {  // called when ServerEngine starts
         // we read the schedule file and put the entries in an  arraylist 
         // so that the schedule is in the same format as when
         // it was updated from the client.
         ArrayList<String> msg;
         BufferedReader inputStream = null;
 
-        SchedulerPanel.serverMessage(1, "Restoring the schedule from " + scheduleFileName);
+        msg(1, "Restoring the schedule from " + scheduleFileName);
         try {
             File initialFile = new File(scheduleFileName);
             InputStream is = new FileInputStream(initialFile);
@@ -179,7 +182,7 @@ public class ServerEngine {
                     msg.add(inputStream.readLine());
                 }
             }
-            ServerEngine.newSchedule(msg);
+            newSchedule(msg);
 
             inputStream.close();
 
@@ -188,13 +191,13 @@ public class ServerEngine {
         }
     }
 
-    static public TimeValue previousEvent(String dayName, int hour, int minute) {
+    public TimeValue previousEvent(String dayName, int hour, int minute) {
         int row = hour * 4 + minute / 15;
         int col = dayToColumn(dayName);
         return tableData[row][col];
     }
 
-    static public TimeValue nextEvent(String dayName, int hour, int minute) {
+    public TimeValue nextEvent(String dayName, int hour, int minute) {
         int row = hour * 4 + minute / 15;
         int col = dayToColumn(dayName);
         row = (row + 1) % rowCount;
@@ -204,17 +207,17 @@ public class ServerEngine {
         return tableData[row][col];
     }
 
-    static public void expireOnDate(TimeValue tnow) {
+    public void expireOnDate(TimeValue tnow) {
 
         if (!expired) {
             if (!tnow.isSameDateAs(tableData[0][dayToColumn(tnow.dayName())])) {
                 expired = true;
-                SchedulerPanel.serverMessage(1, "expire on date ");
+                msg(1, "expire on date ");
             }
         }
     }
 
-    static public void expireOnEndOfSchedule(TimeValue tnow) {
+    public void expireOnEndOfSchedule(TimeValue tnow) {
 
         if (!expired) {
             // check if tnow is in the last time slot of the schedule
@@ -223,7 +226,7 @@ public class ServerEngine {
 
             if ((row == (rowCount - 1)) && (col == (columnCount - 1))) {
                 expired = true;
-                SchedulerPanel.serverMessage(1, "expire on end of schedule ");
+                msg(1, "expire on end of schedule ");
             }
         }
     }

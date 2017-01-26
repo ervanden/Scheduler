@@ -5,7 +5,7 @@ import javax.swing.JFrame;
 public class Scheduler {
 
     static PiServer piServer;
-    static ServerEngine serverEngine;
+//    static ServerEngine serverEngine;
     static int server_verbosity;
     static boolean server_controlActive;
     static int server_port;
@@ -97,15 +97,12 @@ public class Scheduler {
 
         } else if (args[0].equals("server")) {
 
-            serverEngine.scheduleFileName = "/home/pi/Scheduler/Schedule.txt";
             server_verbosity = 0;
             server_port=6789;
             server_controlActive = true;
             for (int arg = 2; arg <= args.length; arg++) {
                 String[] s = args[arg - 1].split("=");
-                if (s[0].equals("file")) {
-                    serverEngine.scheduleFileName = s[1];
-                } else if (s[0].equals("port")) {
+                if (s[0].equals("port")) {
                     server_port = Integer.parseInt(s[1]);
                 } else if (s[0].equals("verbosity")) {
                     server_verbosity = Integer.parseInt(s[1]);
@@ -117,18 +114,13 @@ public class Scheduler {
 
             TimeValue now = new TimeValue();
             System.out.println("Scheduler starts at " + now.dateName());
-            System.out.println("file=" + serverEngine.scheduleFileName);
             System.out.println("verbosity=" + server_verbosity);
             System.out.println("controlActive=" + server_controlActive);
             System.out.println();
 
             Pi4j.initialize();
-            serverEngine = new ServerEngine();
-            serverEngine.restoreSchedule();
-            serverEngine.start(); // spawns a thread and returns
-            piServer = new PiServer();
-            piServer.runServer();
-
+            new ServerEngine(6789).start();
+            new ServerEngine(6790).start();
         }
     }
 }

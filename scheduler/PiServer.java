@@ -7,10 +7,12 @@ import java.util.ArrayList;
 class ServerThread extends Thread {
 
     private Socket socket = null;
+    private ServerEngine serverEngine;
 
-    public ServerThread(Socket socket) {
+    public ServerThread(ServerEngine serverEngine,Socket socket) {
         super("piServer Thread");
         this.socket = socket;
+        this.serverEngine = serverEngine;
     }
 
     public void run() {
@@ -34,15 +36,15 @@ class ServerThread extends Thread {
             }
 
             if (command.equals("newSchedule")) {
-                reply = Scheduler.serverEngine.newSchedule(text);
+                reply = serverEngine.newSchedule(text);
             } else if (command.equals("getSchedule")) {
-                reply = Scheduler.serverEngine.getSchedule(text);
+                reply = serverEngine.getSchedule(text);
             } else if (command.equals("getStatus")) {
-                reply = Scheduler.serverEngine.getStatus();
+                reply = serverEngine.getStatus();
             } else if (command.equals("saveSchedule")) {
-                reply = Scheduler.serverEngine.saveSchedule();
+                reply = serverEngine.saveSchedule();
             } else if (command.equals("restartScheduler")) {
-                reply = Scheduler.serverEngine.restart();
+                reply = serverEngine.restart();
             } else {
                 System.err.println("unknown command from client : <" + command + ">");
             }
@@ -59,20 +61,26 @@ class ServerThread extends Thread {
     }
 }
 
-public class PiServer {
+public class PiServer extends Thread{
 
-    public void runServer() {
+    private ServerEngine serverEngine;
+    private int portNumber;
 
-        int portNumber = Scheduler.server_port;
-        boolean listening = true;
+       public PiServer(ServerEngine serverEngine) {
+        super();
+        this.serverEngine=serverEngine;
+        portNumber=serverEngine.portNumber;
+    }
+
+    public void run() {
 
         try (ServerSocket serverSocket = new ServerSocket(portNumber)) {
-            SchedulerPanel.serverMessage(1, "Listening on port " + portNumber);
-            while (listening) {
-                new ServerThread(serverSocket.accept()).start();
+            SchedulerPanel.serverMessage(portNumber,1, "Listening on port " + portNumber);
+            while (true) {
+                new ServerThread(serverEngine,serverSocket.accept()).start();
             }
         } catch (IOException e) {
-            SchedulerPanel.serverMessage(1, "Could not listen on port " + portNumber+". Exiting...");
+            SchedulerPanel.serverMessage(portNumber,1, "Could not listen on port " + portNumber+". Exiting...");
             System.exit(-1);
         }
     }

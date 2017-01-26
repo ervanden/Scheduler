@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import javax.swing.table.DefaultTableModel;
 import static scheduler.SchedulerPanel.clientMessage;
-import static scheduler.ServerEngine.scheduleFileName;
+
 
 public class MatrixTableModel extends DefaultTableModel {
 
@@ -20,7 +20,7 @@ public class MatrixTableModel extends DefaultTableModel {
 
     public MatrixTableModel() {
         super();
-
+              
         for (int col = 0; col < columnCount; col++) {
             TimeValue day = new TimeValue();
             day.add(Calendar.DAY_OF_MONTH, col);
@@ -92,7 +92,7 @@ public class MatrixTableModel extends DefaultTableModel {
     }
 
     public void readScheduleFromFile() {
-        scheduleFileName = "/var/tmp/SchedulerCommit.txt";
+        String scheduleFileName = "/var/tmp/SchedulerCommit.txt";
         BufferedReader inputStream;
 
         try {

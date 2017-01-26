@@ -4,9 +4,11 @@ public class ServerEngineThread extends Thread {
 
     private boolean stop = false;
     private boolean fastforward = false;
+    private ServerEngine serverEngine;
 
-    public ServerEngineThread() {
+    public ServerEngineThread(ServerEngine serverEngine) {
         super("ServerEngineThread");
+        this.serverEngine=serverEngine;
     }
 
     public void run() {
@@ -18,8 +20,12 @@ public class ServerEngineThread extends Thread {
         }
     }
 
+     private void msg(int verbosity, String message){
+                SchedulerPanel.serverMessage(serverEngine.portNumber,verbosity,message);
+    }
+     
     public void restart() {
-        SchedulerPanel.serverMessage(1, "serverEngineThread is asked to restart");
+        msg(1, "serverEngineThread is asked to restart");
         stop = true;
         // startScheduling() will now terminate and will be called again in run()
     }
@@ -33,32 +39,32 @@ public class ServerEngineThread extends Thread {
 
             }
             if (stop) {
-                SchedulerPanel.serverMessage(1, "sleep is interrupted");
+                msg(1, "sleep is interrupted");
                 return;
             }
         }
     }
 
     private void changeState(boolean newState, TimeValue tnow, boolean showMessage) {
-        if (ServerEngine.STATE != newState) {
+        if (serverEngine.STATE != newState) {
             if (newState) {
-                ServerEngine.STATE = Pi4j.switchOn(Scheduler.server_pin);
+                serverEngine.STATE = Pi4j.switchOn(Scheduler.server_pin);
             } else {
-                ServerEngine.STATE = Pi4j.switchOff(Scheduler.server_pin);
+                serverEngine.STATE = Pi4j.switchOff(Scheduler.server_pin);
             }
             if (showMessage) {
-                SchedulerPanel.serverMessage(1, printState(tnow) + "  <-----------");
+                msg(1, printState(tnow) + "  <-----------");
             }
         } else {
             if (showMessage) {
-                SchedulerPanel.serverMessage(1, printState(tnow));
+                msg(1, printState(tnow));
             }
         }
     }
 
     private String printState(TimeValue tnow) {
         String s = "STATE=";
-        if (ServerEngine.STATE) {
+        if (serverEngine.STATE) {
             s = s + "ON";
         } else {
             s = s + "OFF";
@@ -67,7 +73,7 @@ public class ServerEngineThread extends Thread {
     }
 
     private void startScheduling() {
-        SchedulerPanel.serverMessage(1, "Restart scheduling");
+        msg(1, "Restart scheduling");
 
         TimeValue tnow;
         TimeValue tprev;
@@ -76,8 +82,8 @@ public class ServerEngineThread extends Thread {
         boolean currentState, nextState;
         boolean firstIteration = true;
 
-        if (!ServerEngine.scheduleHasData()) {
-            SchedulerPanel.serverMessage(1, "Schedule has no data. Waiting...");
+        if (!serverEngine.scheduleHasData()) {
+            msg(1, "Schedule has no data. Waiting...");
             stoppableSleep(60);
         } else {
             /* PSEUDO CODE,DO NOT REMOVE    
@@ -93,7 +99,7 @@ public class ServerEngineThread extends Thread {
 
             tnow = new TimeValue(); //compiler needs initialization
 
-            SchedulerPanel.serverMessage(1, printState(tnow) + "  <----------- Pin STATE");
+            msg(1, printState(tnow) + "  <----------- Pin STATE");
 
             while (!stop) {
 
@@ -112,16 +118,16 @@ public class ServerEngineThread extends Thread {
                 }
 
                 // expire if we are one week later than the same day in the schedule
-                ServerEngine.expireOnDate(tnow);
+                serverEngine.expireOnDate(tnow);
 
-                tprev = ServerEngine.previousEvent(tnow.dayName(), tnow.hour(), tnow.minute());
-                tnext = ServerEngine.nextEvent(tnow.dayName(), tnow.hour(), tnow.minute());
+                tprev = serverEngine.previousEvent(tnow.dayName(), tnow.hour(), tnow.minute());
+                tnext = serverEngine.nextEvent(tnow.dayName(), tnow.hour(), tnow.minute());
 
-                SchedulerPanel.serverMessage(2, tprev.dateName() + " < " + tnow.dateName() + "  < " + tnext.dateName());
+                msg(2, tprev.dateName() + " < " + tnow.dateName() + "  < " + tnext.dateName());
 
                 /* tprev is always on the same day as tnow */
                 currentState = getState(tprev);
-                SchedulerPanel.serverMessage(2, "current state according to schedule (tprev)  = " + currentState);
+                msg(2, "current state according to schedule (tprev)  = " + currentState);
 
                 if (stop) {
                     return;
@@ -129,19 +135,19 @@ public class ServerEngineThread extends Thread {
 
                 changeState(currentState, tnow, firstIteration);
 
-                ServerEngine.expireOnEndOfSchedule(tnow);
+                serverEngine.expireOnEndOfSchedule(tnow);
                 // getState will from now on only be called for future events.
                 // If tnow is in the last timeslot of the schedule, all future events expire
 
                 nextState = getState(tnext);
-                SchedulerPanel.serverMessage(2, "next state according to schedule (tnext) = " + nextState);
+                msg(2, "next state according to schedule (tnext) = " + nextState);
                 int secondsToNextEvent = tnext.isSecondsLaterThan(tnow);
                 if (secondsToNextEvent < 0) {
                     // we are in the last timeslot of the day, tnext is next day
                     secondsToNextEvent = 24 * 3600 - (tnow.hour() * 3600 + tnow.minute() * 60);
                 }
-                SchedulerPanel.serverMessage(2, "seconds to next event = " + secondsToNextEvent);
-                SchedulerPanel.serverMessage(2, "Sleeping " + secondsToNextEvent);
+                msg(2, "seconds to next event = " + secondsToNextEvent);
+                msg(2, "Sleeping " + secondsToNextEvent);
 
                 if (!fastforward) {
                     stoppableSleep(secondsToNextEvent);
@@ -155,7 +161,7 @@ public class ServerEngineThread extends Thread {
 
                 changeState(nextState, tnow, true);
 
-                SchedulerPanel.serverMessage(2, "Sleeping " + 5 * 60);
+                msg(2, "Sleeping " + 5 * 60);
 
                 if (!fastforward) {
                     stoppableSleep(5 * 60);
@@ -172,7 +178,7 @@ public class ServerEngineThread extends Thread {
         // get the state of the event in tschedule on the date of today.
         // it is assumed that tschedule and today are the same weekday.
 
-        if (ServerEngine.expired) {
+        if (serverEngine.expired) {
             if (tschedule.once) {
                 return !tschedule.on;
             } else {
