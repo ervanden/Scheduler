@@ -15,6 +15,8 @@ import java.util.ArrayList;
 public class ServerEngine {
 
     public int portNumber;
+    public int pinNumber;
+    
     public boolean STATE = false;
     public boolean expired = false;
 
@@ -45,14 +47,15 @@ public class ServerEngine {
         }
     }
 
-    public ServerEngine(int portNumber) {
+    public ServerEngine(int portNumber, int pinNumber) {
         this.portNumber = portNumber;
+        this.pinNumber = pinNumber;
 
         scheduleFileName = "/home/pi/Scheduler/Schedule"+portNumber+".txt";
         if (!Scheduler.server_controlActive) {
             scheduleFileName = "C:\\Users\\erikv\\Documents\\Schedule"+portNumber+".txt";
         }
-        Pi4j.initPin(Scheduler.server_pin);
+        Pi4j.initPin(pinNumber);
 
         this.STATE = Pi4j.readPin();// dummy for now
         restoreSchedule();

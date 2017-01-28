@@ -9,7 +9,6 @@ public class Scheduler {
     static int server_verbosity;
     static boolean server_controlActive;
     static int server_port;
-    static int server_pin = 6;
 
     static PiClient piClient;
     static String client_target_host;
@@ -119,8 +118,8 @@ public class Scheduler {
             System.out.println();
 
             Pi4j.initialize();
-            new ServerEngine(6789).start();
-            new ServerEngine(6790).start();
+            new ServerEngine(6789,6).start();
+            new ServerEngine(6790,5).start();
         }
     }
 }

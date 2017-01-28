@@ -48,9 +48,9 @@ public class ServerEngineThread extends Thread {
     private void changeState(boolean newState, TimeValue tnow, boolean showMessage) {
         if (serverEngine.STATE != newState) {
             if (newState) {
-                serverEngine.STATE = Pi4j.switchOn(Scheduler.server_pin);
+                serverEngine.STATE = Pi4j.switchOn(serverEngine.pinNumber);
             } else {
-                serverEngine.STATE = Pi4j.switchOff(Scheduler.server_pin);
+                serverEngine.STATE = Pi4j.switchOff(serverEngine.pinNumber);
             }
             if (showMessage) {
                 msg(1, printState(tnow) + "  <-----------");
