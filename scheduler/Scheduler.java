@@ -1,11 +1,10 @@
 package scheduler;
 
+import java.util.ArrayList;
 import javax.swing.JFrame;
 
 public class Scheduler {
 
-    static PiServer piServer;
-//    static ServerEngine serverEngine;
     static int server_verbosity;
     static boolean server_controlActive;
     static int server_port;
@@ -85,11 +84,16 @@ public class Scheduler {
                 tm.getScheduleFromServer();
                 tm.phpPrintSchedule();
             } else if (client_command.equals("SchedulerCommit")) {
-                System.out.println("java client received command");
-                //               tm.getScheduleFromServer();// niet nodig ???????
                 tm.readScheduleFromFile();
                 tm.sendScheduleToServer();
-
+            } else if (true) { // command for PhpServer to execute, if port=6788
+                ArrayList<String> msg = new ArrayList<>();
+                ArrayList<String> reply;
+                msg.add(client_command);
+                reply = PiClient.send(msg);
+                for (String line : reply) {
+                    System.out.println(line);
+                }
             } else {
                 System.out.println("unknown client command: " + client_command);
             }
@@ -97,7 +101,7 @@ public class Scheduler {
         } else if (args[0].equals("server")) {
 
             server_verbosity = 0;
-            server_port=6789;
+            server_port = 6789;
             server_controlActive = true;
             for (int arg = 2; arg <= args.length; arg++) {
                 String[] s = args[arg - 1].split("=");
@@ -118,8 +122,10 @@ public class Scheduler {
             System.out.println();
 
             Pi4j.initialize();
-            new ServerEngine(6789,6).start();
-            new ServerEngine(6790,5).start();
+            new PhpServer(6788).start();
+            System.out.println("phpserver returned");
+            new ServerEngine(6789, 6).start();
+            new ServerEngine(6790, 5).start();
         }
     }
 }
