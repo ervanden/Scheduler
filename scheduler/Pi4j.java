@@ -7,10 +7,12 @@ public class Pi4j {
     static GpioController gpio;
 
     static GpioPinDigitalOutput[] initializedOutputPins = new GpioPinDigitalOutput[20];
+    static GpioPinDigitalInput[] initializedInputPins = new GpioPinDigitalInput[20];
 
     {
         for (int i = 0; i < 20; i++) {
             initializedOutputPins[i] = null;
+            initializedInputPins[i] = null;
         }
     }
 
@@ -60,27 +62,27 @@ public class Pi4j {
             case 20:
                 return RaspiPin.GPIO_20;
             default:
-                SchedulerPanel.serverMessage(0,0, "non existing raspi pin " + i);
+                SchedulerPanel.serverMessage(0, 0, "non existing raspi pin " + i);
 
         }
         return pin;
     }
 
     static public boolean switchOn(int n) {
-        SchedulerPanel.serverMessage(0,2, "switchOn(" + n + ")");
+        SchedulerPanel.serverMessage(0, 2, "switchOn(" + n + ")");
         GpioPinDigitalOutput pin = initializedOutputPins[n];
         if (Scheduler.server_controlActive) {
-            SchedulerPanel.serverMessage(0,2, "Pi4J Pin " + n + " On");
+            SchedulerPanel.serverMessage(0, 2, "Pi4J Pin " + n + " On");
             pin.high();
         }
         return true;
     }
 
     static public boolean switchOff(int n) {
-        SchedulerPanel.serverMessage(0,2, "switchOff(" + n + ")");
+        SchedulerPanel.serverMessage(0, 2, "switchOff(" + n + ")");
         GpioPinDigitalOutput pin = initializedOutputPins[n];
         if (Scheduler.server_controlActive) {
-            SchedulerPanel.serverMessage(0,2, "Pi4J Pin " + n + " Off");
+            SchedulerPanel.serverMessage(0, 2, "Pi4J Pin " + n + " Off");
             pin.low();
         }
         return false;
@@ -90,12 +92,24 @@ public class Pi4j {
         return false;
     }
 
-    static public boolean initPin(int n) {
+    static public boolean initOutputPin(int n) {
+        GpioPinDigitalOutput op = null;
         if (Scheduler.server_controlActive) {
-            initializedOutputPins[n]
-                    = gpio.provisionDigitalOutputPin(intToPin(n), "LED", PinState.LOW);
+            op = gpio.provisionDigitalOutputPin(intToPin(n), "LED", PinState.LOW);
+            initializedOutputPins[n] = op;
         }
         return true;
+    }
+
+    static public GpioPinDigitalInput initInputPin(int n) {
+        // return the GpioPin so that a listener can be added to it
+        GpioPinDigitalInput ip = null;
+        if (Scheduler.server_controlActive) {
+            ip = gpio.provisionDigitalInputPin(intToPin(n), PinPullResistance.PULL_DOWN);
+            ip.setShutdownOptions(true);
+            initializedInputPins[n] = ip;
+        }
+        return ip;
     }
 
     public static void initialize() {

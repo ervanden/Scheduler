@@ -55,7 +55,7 @@ public class ServerEngine {
         if (!Scheduler.server_controlActive) {
             scheduleFileName = "C:\\Users\\erikv\\Documents\\Schedule"+portNumber+".txt";
         }
-        Pi4j.initPin(pinNumber);
+        Pi4j.initOutputPin(pinNumber);
 
         this.STATE = Pi4j.readPin();// dummy for now
         restoreSchedule();
