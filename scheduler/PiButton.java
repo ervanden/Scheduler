@@ -3,19 +3,39 @@ package scheduler;
 import com.pi4j.io.gpio.*;
 import com.pi4j.io.gpio.event.GpioPinDigitalStateChangeEvent;
 import com.pi4j.io.gpio.event.GpioPinListenerDigital;
+import java.time.LocalDateTime;
 
 public class PiButton {
+
+    int p_h;
+    int p_m;
+    int p_s;
+    int p_mil;
 
     public PiButton(int pin) {
         System.out.println("<--Pi4J--> GPIO Listen Example ... started.");
 
-        final GpioPinDigitalInput myButton = Pi4j.initInputPin(2);
+        final GpioPinDigitalInput myButton = Pi4j.initInputPin(pin);
 
         myButton.addListener(new GpioPinListenerDigital() {
             @Override
             public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent event) {
-                // display pin state on console
-                System.out.println(" --> GPIO PIN " + pin + " STATE CHANGE: " + event.getPin() + " = " + event.getState());
+                LocalDateTime now = LocalDateTime.now();
+                int h = now.getHour();
+                int m = now.getMinute();
+                int s = now.getSecond();
+                int mil = now.getNano() / 1000000;
+                int delta = (mil + s * 1000 + m * 60000 + h * 3600000) 
+                        - (p_mil + p_s * 1000 + p_m * 60000 + p_h * 3600000);
+                p_h = h;
+                p_m = m;
+                p_s = s;
+                p_mil = mil;
+//                System.out.println(h + ":" + m + " " + s + "." + mil+ "  "
+                System.out.println(delta + " msec  "
+                        + "--> GPIO PIN " + pin
+                        + " STATE CHANGE: " + event.getPin()
+                        + " = " + event.getState());
             }
 
         });
@@ -24,9 +44,10 @@ public class PiButton {
 
         try {
             while (true) {
-                Thread.sleep(500);
+                Thread.sleep(5000);
             }
         } catch (InterruptedException ie) {
+            System.out.println("PiButton sleep interrupted exception");
         };
 
         // stop all GPIO activity/threads by shutting down the GPIO controller

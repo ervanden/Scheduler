@@ -25,13 +25,13 @@ class ServerThread extends Thread {
             // wait for client to send a command, followed by text, terminated with "."
             String command;
             ArrayList<String> text = new ArrayList<>();
-            ArrayList<String> reply = null;
+            ArrayList<String> reply = new ArrayList<>();
 
             command = inFromClient.readLine();
 
             String line = inFromClient.readLine();
             while (!line.equals(".")) {
-                text.add(line);
+                text.add(line);                
                 line = inFromClient.readLine();
             }
 
