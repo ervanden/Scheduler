@@ -3,6 +3,16 @@ package scheduler;
 import com.pi4j.io.gpio.*;
 
 public class Pi4j {
+    
+    /* wrapper around the Pi4J library.  GPIO pins are represented as integers
+    
+          initialize();   //once, no arguments
+          ...
+          initOutputPin(n)...switchOn(n)...switchOff(n)...
+    or:
+          initInputPin(n) and add a listener to this pin, see PiButton for an example
+    
+    */
 
     static GpioController gpio;
 
@@ -16,7 +26,7 @@ public class Pi4j {
         }
     }
 
-    static public Pin intToPin(int i) {
+    static Pin intToPin(int i) {
         Pin pin = null;
         switch (i) {
             case 0:
