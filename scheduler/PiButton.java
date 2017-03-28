@@ -5,20 +5,13 @@ import com.pi4j.io.gpio.event.GpioPinDigitalStateChangeEvent;
 import com.pi4j.io.gpio.event.GpioPinListenerDigital;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.time.LocalDateTime;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 
 public class PiButton {
 
-    // time of last pin state change
-    int p_h;
-    int p_m;
-    int p_s;
-    int p_mil;
-    // time when last picture was taken
-    int pic_h;
-    int pic_m;
-    int pic_s;
-    int pic_mil;
+    long p_mil; // time of last pin state change
+    long pic_mil; // time when last picture was taken
 
     public PiButton(int pin) {
 
@@ -27,16 +20,9 @@ public class PiButton {
         myButton.addListener(new GpioPinListenerDigital() {
             @Override
             public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent event) {
-                LocalDateTime now = LocalDateTime.now();
-                int h = now.getHour();
-                int m = now.getMinute();
-                int s = now.getSecond();
-                int mil = now.getNano() / 1000000;
-                int delta = (mil + s * 1000 + m * 60000 + h * 3600000)
-                        - (p_mil + p_s * 1000 + p_m * 60000 + p_h * 3600000);
-                p_h = h;
-                p_m = m;
-                p_s = s;
+                Calendar now = new GregorianCalendar();
+                long mil = now.getTimeInMillis();
+                long delta = mil-p_mil;
                 p_mil = mil;
 
                 System.out.println(delta + " msec  "
@@ -44,24 +30,16 @@ public class PiButton {
                         + " STATE CHANGE: " + event.getPin()
                         + " = " + event.getState());
 
-                int pic_delta = (mil + s * 1000 + m * 60000 + h * 3600000)
-                        - (pic_mil + pic_s * 1000 + pic_m * 60000 + pic_h * 3600000);
+                long pic_delta = mil-pic_mil;
 
-                
-                pic_h = h;
-                pic_m = m;
-                pic_s = s;
-                pic_mil = mil;
-                
-                System.out.println(pic_delta + " msec  = picture delta");
-                
                 if (pic_delta > 2000) {
-                    
-                    // do not take pictures faster than one per 2 seconds
 
+                    pic_mil = mil;
+
+                    // do not take pictures faster than one per 2 seconds
                     Process p;
                     try {
-                        System.out.println("/home/pi/Scheduler/takePicture");
+                System.out.println("("+pic_delta + "msec  = picture delta) /home/pi/Scheduler/takePicture");
                         p = Runtime.getRuntime().exec("/home/pi/Scheduler/takePicture");
                         p.waitFor();
                         BufferedReader reader
