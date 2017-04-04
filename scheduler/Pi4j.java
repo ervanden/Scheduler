@@ -4,7 +4,7 @@ import com.pi4j.io.gpio.*;
 
 public class Pi4j {
     
-    /* wrapper around the Pi4J library.  GPIO pins are represented as integers
+    /* this is a wrapper around the Pi4J library.  GPIO pins are represented as integers
     
           initialize();   //once, no arguments
           ...
