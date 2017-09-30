@@ -125,7 +125,7 @@ public class Scheduler {
             new PhpServer(6788).start();
             new ServerEngine(6789, 6).start();
             new ServerEngine(6790, 5).start();
-            new PiButton(2);
+//            new PiButton(2);
         }
     }
 }

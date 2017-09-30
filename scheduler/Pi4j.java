@@ -1,18 +1,46 @@
 package scheduler;
 
+public class Pi4j {
+    
+    static public boolean switchOn(int n) {
+
+        if (Scheduler.server_controlActive) {
+            SchedulerPanel.serverMessage(0, 2, "Pi4J Pin " + n + " On");
+        }
+        return true;
+    }
+
+    static public boolean switchOff(int n) {
+        if (Scheduler.server_controlActive) {
+            SchedulerPanel.serverMessage(0, 2, "Pi4J Pin " + n + " Off");
+        }
+        return false;
+    }
+
+    static public boolean readPin() {
+        return false;
+    }
+
+    static public boolean initOutputPin(int n) {
+
+        return true;
+    }
+
+
+
+    public static void initialize() {
+
+    }
+}
+
+
+/*
 import com.pi4j.io.gpio.*;
 
 public class Pi4j {
+   
     
-    /* This a wrapper around the Pi4J library.  GPIO pins are represented as integers
-    
-          initialize();   //once, no arguments
-          ...
-          initOutputPin(n)...switchOn(n)...switchOff(n)...
-    or:
-          initInputPin(n) and add a listener to this pin, see PiButton for an example
-    
-    */
+
 
     static GpioController gpio;
 
@@ -128,3 +156,5 @@ public class Pi4j {
         }
     }
 }
+
+*/

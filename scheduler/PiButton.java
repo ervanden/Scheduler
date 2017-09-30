@@ -1,3 +1,4 @@
+/*
 package scheduler;
 
 import com.pi4j.io.gpio.*;
@@ -73,3 +74,5 @@ public class PiButton {
         // gpio.shutdown();   <--- implement this method call if you wish to terminate the Pi4J GPIO controller
     }
 }
+
+*/
