@@ -5,14 +5,14 @@ public class Pi4j {
     static public boolean switchOn(int n) {
 
         if (Scheduler.server_controlActive) {
-            SchedulerPanel.serverMessage(0, 2, "Pi4J Pin " + n + " On");
+         System.out.println("Pi4J Pin " + n + " On");
         }
         return true;
     }
 
     static public boolean switchOff(int n) {
         if (Scheduler.server_controlActive) {
-            SchedulerPanel.serverMessage(0, 2, "Pi4J Pin " + n + " Off");
+            System.out.println("Pi4J Pin " + n + " Off");
         }
         return false;
     }

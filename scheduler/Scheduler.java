@@ -122,7 +122,7 @@ public class Scheduler {
             System.out.println();
 
             Pi4j.initialize();
-            new PhpServer(6788).start();
+ //           new PhpServer(6788).start();
             new ServerEngine(6789, 6).start();
             new ServerEngine(6790, 5).start();
 //            new PiButton(2);
