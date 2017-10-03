@@ -10,6 +10,7 @@ public class Scheduler {
     static int server_port;
 
     static PiClient piClient;
+    public static RGPIOInterface rgpioInterface;
     static String client_target_host;
     static int client_target_port;
     static String client_command;
@@ -121,10 +122,10 @@ public class Scheduler {
             System.out.println("controlActive=" + server_controlActive);
             System.out.println();
 
-            Pi4j.initialize();
- //           new PhpServer(6788).start();
-            new ServerEngine(6789, 6).start();
-            new ServerEngine(6790, 5).start();
+            rgpioInterface = new RGPIOInterface();
+            rgpioInterface.initialize();
+            new ServerEngine(6789, "heating").start();
+            new ServerEngine(6790, "boiler").start();
 //            new PiButton(2);
         }
     }
