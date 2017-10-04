@@ -53,7 +53,7 @@ class RGPIOInterface implements VInputListener, MessageListener {
                 boiler.set("Low");
             }
         }
-        return true;
+        return false;
     }
 
 }
