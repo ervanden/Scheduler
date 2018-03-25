@@ -19,7 +19,7 @@ class RGPIOInterface implements VInputListener, MessageListener {
     public void initialize() {
 
         RGPIO.addMessageListener(this);
-        RGPIO.initialize("/home/pi/RGPIO/");
+        RGPIO.initialize();
         button = RGPIO.VDigitalInput("button");
         heating = RGPIO.VDigitalOutput("heating");
         boiler = RGPIO.VDigitalOutput("boiler");
