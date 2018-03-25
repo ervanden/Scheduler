@@ -37,8 +37,23 @@ public class Scheduler {
 
     public static void main(String[] args) {
 
-        if (args.length == 0) {
-            usage();
+        if (args.length == 0) { // run as server
+           server_verbosity = 0;
+            server_port = 6789;
+            server_controlActive = true;
+
+            TimeValue now = new TimeValue();
+            System.out.println("Scheduler starts at " + now.dateName());
+            System.out.println("verbosity=" + server_verbosity);
+            System.out.println("controlActive=" + server_controlActive);
+            System.out.println();
+
+            rgpioInterface = new RGPIOInterface();
+            rgpioInterface.initialize();
+            new ServerEngine(6789, "heating").start();
+            new ServerEngine(6790, "boiler").start();
+//            new PiButton(2);
+            
         } else if (args[0].equals("client")) {
             client_target_host = "localhost";
             client_target_port = 6789;
@@ -99,34 +114,8 @@ public class Scheduler {
                 System.out.println("unknown client command: " + client_command);
             }
 
-        } else if (args[0].equals("server")) {
-
-            server_verbosity = 0;
-            server_port = 6789;
-            server_controlActive = true;
-            for (int arg = 2; arg <= args.length; arg++) {
-                String[] s = args[arg - 1].split("=");
-                if (s[0].equals("port")) {
-                    server_port = Integer.parseInt(s[1]);
-                } else if (s[0].equals("verbosity")) {
-                    server_verbosity = Integer.parseInt(s[1]);
-                } else if (s[0].equals("control")) {
-                    server_controlActive = Boolean.parseBoolean(s[1]);
-                }
-
-            }
-
-            TimeValue now = new TimeValue();
-            System.out.println("Scheduler starts at " + now.dateName());
-            System.out.println("verbosity=" + server_verbosity);
-            System.out.println("controlActive=" + server_controlActive);
-            System.out.println();
-
-            rgpioInterface = new RGPIOInterface();
-            rgpioInterface.initialize();
-            new ServerEngine(6789, "heating").start();
-            new ServerEngine(6790, "boiler").start();
-//            new PiButton(2);
+        } else  {
+ usage();
         }
     }
 }
