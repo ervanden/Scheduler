@@ -38,7 +38,7 @@ public class Scheduler {
     public static void main(String[] args) {
 
         if (args.length == 0) { // run as server
-           server_verbosity = 0;
+           server_verbosity = 1;
             server_port = 6789;
             server_controlActive = true;
 
